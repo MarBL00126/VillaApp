@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: appVillaSanMartin
+  datasource:
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:villa_db}
+    username: ${PGUSER:postgres}
+    password: ${PGPASSWORD:rmldia39}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    org.flywaydb: INFO
+    root: INFO
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: 86400000
+mercadopago:
+  access-token: ${MP_ACCESS_TOKEN:TEST-placeholder}
+  webhook-secret: ${MP_WEBHOOK_SECRET:placeholder-secret}

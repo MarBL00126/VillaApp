@@ -47,6 +47,9 @@ public class SecurityConfig {
 
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
+                                                                "/",
+                                                                "/error",
+                                                                "/actuator/health",
                                                                 "/users/register", "/users/login", "/auth/**",
                                                                 "/teams/**", "/players/**", "/matches/**",
                                                                 "/fixture/**", "/stats/**", "/webhooks/**")

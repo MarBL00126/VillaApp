@@ -48,10 +48,17 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/",
+                                                                "/index.html",
+                                                                "/assets/**",
+                                                                "/favicon.ico",
+                                                                "/favicon.svg",
+                                                                "/icons.svg",
                                                                 "/health",
                                                                 "/error",
-                                                                "/favicon.ico",
                                                                 "/actuator/health",
+                                                                "/login", "/register", "/players/**", "/fixture",
+                                                                "/stats", "/profile", "/matches/**", "/orders/**",
+                                                                "/payment/**", "/admin/**",
                                                                 "/api/users/register", "/api/users/login",
                                                                 "/api/auth/**",
                                                                 "/api/teams/**", "/api/players/**", "/api/matches/**",

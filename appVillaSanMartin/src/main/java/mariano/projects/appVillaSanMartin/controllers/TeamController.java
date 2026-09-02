@@ -11,7 +11,7 @@ import mariano.projects.appVillaSanMartin.entities.TeamEntity;
 import mariano.projects.appVillaSanMartin.services.TeamService;
 
 @RestController
-@RequestMapping("/teams")
+@RequestMapping("/api/teams")
 public class TeamController {
     private final TeamService teamService;
 

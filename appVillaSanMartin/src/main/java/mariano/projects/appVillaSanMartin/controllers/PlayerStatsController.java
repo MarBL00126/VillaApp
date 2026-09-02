@@ -11,7 +11,7 @@ import mariano.projects.appVillaSanMartin.entities.PlayerStatsEntity;
 import mariano.projects.appVillaSanMartin.services.PlayerStatsService;
 
 @RestController
-@RequestMapping("/stats")
+@RequestMapping("/api/stats")
 public class PlayerStatsController {
     private final PlayerStatsService playerStatsService;
 

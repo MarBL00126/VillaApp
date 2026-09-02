@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import mariano.projects.appVillaSanMartin.entities.MatchEntity;
@@ -12,6 +13,7 @@ import mariano.projects.appVillaSanMartin.services.MatchService;
 import mariano.projects.appVillaSanMartin.services.TicketTypeService;
 
 @RestController
+@RequestMapping("/api")
 public class MatchController {
     private final MatchService matchService;
     private final TicketTypeService ticketTypeService;

@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import mariano.projects.appVillaSanMartin.services.WebhookService;
 
 @RestController
-@RequestMapping("/webhooks")
+@RequestMapping("/api/webhooks")
 @RequiredArgsConstructor
 public class WebhookController {
     private final WebhookService webhookService;

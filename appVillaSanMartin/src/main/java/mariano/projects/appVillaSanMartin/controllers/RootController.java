@@ -10,11 +10,8 @@ import java.util.Map;
 public class RootController {
 
     @GetMapping("/")
-    public ResponseEntity<Map<String, String>> root() {
-        return ResponseEntity.ok(Map.of(
-                "status", "ok",
-                "app", "VillaApp San Martin",
-                "message", "API is running"));
+    public String index() {
+        return "forward:/index.html";
     }
 
     @GetMapping("/health")

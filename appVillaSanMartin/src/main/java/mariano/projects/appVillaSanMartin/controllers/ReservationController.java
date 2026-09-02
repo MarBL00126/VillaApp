@@ -20,7 +20,7 @@ import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.ReservationService;
 
 @RestController
-@RequestMapping("/reservations")
+@RequestMapping("/api/reservations")
 public class ReservationController {
 
     private final ReservationService reservationService;

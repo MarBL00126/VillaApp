@@ -21,7 +21,7 @@ import mariano.projects.appVillaSanMartin.services.UserService;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
     private final UserRepository userRepository;

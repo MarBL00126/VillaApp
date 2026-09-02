@@ -26,7 +26,7 @@ import mariano.projects.appVillaSanMartin.services.PaymentService;
 import mariano.projects.appVillaSanMartin.services.PurchaseOrderService;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/orders")
 public class PurchaseOrderController {
 
         private final PurchaseOrderService purchaseOrderService;

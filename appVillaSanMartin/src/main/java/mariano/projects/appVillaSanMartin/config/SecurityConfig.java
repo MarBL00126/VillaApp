@@ -52,12 +52,13 @@ public class SecurityConfig {
                                                                 "/error",
                                                                 "/favicon.ico",
                                                                 "/actuator/health",
-                                                                "/users/register", "/users/login", "/auth/**",
-                                                                "/teams/**", "/players/**", "/matches/**",
-                                                                "/fixture/**", "/stats/**", "/webhooks/**")
+                                                                "/api/users/register", "/api/users/login",
+                                                                "/api/auth/**",
+                                                                "/api/teams/**", "/api/players/**", "/api/matches/**",
+                                                                "/api/fixture/**", "/api/stats/**", "/api/webhooks/**")
                                                 .permitAll()
-                                                .requestMatchers("/reservations/**").authenticated()
-                                                .requestMatchers("/orders/validate-qr").hasRole("ADMIN")
+                                                .requestMatchers("/api/reservations/**").authenticated()
+                                                .requestMatchers("/api/orders/validate-qr").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
                                 .exceptionHandling(exception -> exception
                                                 .authenticationEntryPoint(

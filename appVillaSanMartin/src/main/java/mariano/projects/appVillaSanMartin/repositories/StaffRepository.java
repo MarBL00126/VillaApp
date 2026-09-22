@@ -1,0 +1,10 @@
+package mariano.projects.appVillaSanMartin.repositories;
+import mariano.projects.appVillaSanMartin.entities.StaffEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+@Repository
+public interface StaffRepository extends JpaRepository<StaffEntity, Integer> {
+    List<StaffEntity> findByActiveTrue();
+    List<StaffEntity> findByTeam_IdAndActiveTrue(int teamId);
+}

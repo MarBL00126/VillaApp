@@ -10,4 +10,6 @@ import mariano.projects.appVillaSanMartin.entities.PlayerEntity;
 @Repository
 public interface PlayerRepository extends JpaRepository<PlayerEntity, Integer> {
     List<PlayerEntity> findByTeam_Id(int teamId);
+    List<PlayerEntity> findByActiveTrue();
+    List<PlayerEntity> findByTeam_IdAndActiveTrue(int teamId);
 }

@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name = "User")
 @Table(name = "users")
@@ -27,6 +28,7 @@ public class UserEntity {
     @Column(nullable = false, length = 50)
     private String email;
     @Column(nullable = false, length = 255)
+    @JsonIgnore
     private String password;
     @Column
     private int points;

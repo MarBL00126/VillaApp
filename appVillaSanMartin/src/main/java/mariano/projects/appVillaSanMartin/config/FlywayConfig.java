@@ -16,14 +16,18 @@ public class FlywayConfig {
     @Value("${spring.flyway.locations:classpath:db/migration}")
     private String locations;
 
-    @Bean(name = "flyway", initMethod = "migrate")
+    @Bean(name = "flyway")
     public Flyway flyway(DataSource dataSource) {
         log.info("Ejecutando migraciones Flyway desde: {}", locations);
-        return Flyway.configure()
+        Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(locations)
                 .baselineOnMigrate(false)
+                .outOfOrder(true)
                 .loggers("slf4j")
                 .load();
+        flyway.repair();
+        flyway.migrate();
+        return flyway;
     }
 }

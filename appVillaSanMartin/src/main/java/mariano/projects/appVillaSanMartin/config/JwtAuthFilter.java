@@ -15,19 +15,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final HandlerExceptionResolver handlerExceptionResolver;
 
-    public JwtAuthFilter(JwtService jwtService, UserDetailsService userDetailsService,
-            HandlerExceptionResolver handlerExceptionResolver) {
+    public JwtAuthFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
     @Override
@@ -53,7 +49,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception exception) {
-            handlerExceptionResolver.resolveException(request, response, null, exception);
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
             return;
         }
         filterChain.doFilter(request, response);

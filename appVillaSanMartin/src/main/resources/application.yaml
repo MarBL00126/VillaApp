@@ -33,3 +33,11 @@ jwt:
 mercadopago:
   access-token: ${MP_ACCESS_TOKEN:TEST-placeholder}
   webhook-secret: ${MP_WEBHOOK_SECRET:placeholder-secret}
+
+app:
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    name: ${ADMIN_NAME:Admin}
+    surname: ${ADMIN_SURNAME:Villa}
+    phone: ${ADMIN_PHONE:0000000000}

@@ -35,5 +35,13 @@ public class PlayerEntity {
     @ManyToOne
     @JoinColumn(name = "team_id", nullable = false)
     private TeamEntity team;
+    @Column(columnDefinition = "TEXT")
+    private String biography;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+    @Column(nullable = false)
+    private boolean active = true;
+    @Column(name = "favorite_count", nullable = false)
+    private int favoriteCount = 0;
 
 }

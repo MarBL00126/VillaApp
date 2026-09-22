@@ -49,6 +49,10 @@ export interface Player {
   nationality: string;
   birthDate: string;
   team: Team;
+  biography?: string;
+  imageUrl?: string;
+  active?: boolean;
+  favoriteCount?: number;
 }
 
 // ── Match ─────────────────────────────────────────────
@@ -93,3 +97,25 @@ export interface TicketType {
   availableQuantity:number;
   createdAt:string; 
 }
+
+export interface ProductCategory { id: number; name: string; slug: string; active: boolean; }
+export interface Product { id: number; category: ProductCategory; name: string; description: string; price: number; imageUrl: string; active: boolean; }
+export interface ProductVariant { id: number; label: string; stock: number; }
+export interface FavoriteProduct { id: number; product: Product; createdAt: string; }
+export interface CartItem { id: number; product: Product; variant: ProductVariant | null; quantity: number; unitPrice: number; }
+export interface Cart { id: number; items: CartItem[]; }
+export interface Coupon { id: number; code: string; discountPct: number; }
+export interface ShopOrder { id: number; subtotal: number; discount: number; totalAmount: number; status: string; createdAt: string; items: ShopOrderItem[]; coupon: Coupon | null; }
+export interface ShopOrderItem { id: number; product: Product; variant: ProductVariant | null; quantity: number; unitPrice: number; }
+export interface NewsCategory { id: number; name: string; slug: string; }
+export interface News { id: number; title: string; summary: string; content: string; imageUrl: string; featured: boolean; author: string; publishedAt: string; category: NewsCategory; }
+export interface FavoriteNews { id: number; news: News; createdAt: string; }
+export interface Gallery { id: number; title: string; coverImageUrl: string; eventDate: string; }
+export interface Photo { id: number; imageUrl: string; caption: string; sortOrder: number; }
+export interface Video { id: number; title: string; description: string; url: string; thumbnail: string; type: string; publishedAt: string; }
+export interface CantinaInfo { id: number; address: string; phone: string; email: string; schedule: string; paymentMethods: string; mapsUrl: string; isOpen: boolean; }
+export interface CantinaMenuCategory { id: number; name: string; sortOrder: number; }
+export interface CantinaMenuItem { id: number; category: CantinaMenuCategory; name: string; description: string; price: number; imageUrl: string; available: boolean; }
+export interface CantinaOrder { id: number; orderNumber: string; status: string; totalAmount: number; paymentMethod: string; createdAt: string; items: CantinaOrderItem[]; }
+export interface CantinaOrderItem { id: number; menuItem: CantinaMenuItem; quantity: number; unitPrice: number; }
+

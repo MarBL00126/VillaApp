@@ -1,0 +1,20 @@
+import api from './api';
+export const membershipService = {
+  getTypes: () => api.get('/membership/types').then(r => r.data),
+  getMyMembership: () => api.get('/membership/my').then(r => r.data || null),
+  signup: (membershipTypeId: number) => api.post('/membership/signup', { membershipTypeId }).then(r => r.data),
+  getCard: () => api.get('/membership/card').then(r => r.data),
+  getMyFees: () => api.get('/fees/my').then(r => r.data),
+  getPendingFees: () => api.get('/fees/my/pending').then(r => r.data),
+  payFee: (feeId: number) => api.post(`/fees/${feeId}/pay`).then(r => r.data),
+  getBenefits: () => api.get('/benefits').then(r => r.data),
+  getMyBenefits: () => api.get('/benefits/my').then(r => r.data),
+  getNotifications: () => api.get('/notifications').then(r => r.data),
+  getUnreadCount: () => api.get('/notifications/unread-count').then(r => r.data),
+  markRead: (id: number) => api.patch(`/notifications/${id}/read`).then(r => r.data),
+  markAllRead: () => api.patch('/notifications/read-all').then(r => r.data),
+  getPreferences: () => api.get('/preferences').then(r => r.data),
+  updatePreferences: (prefs: object) => api.put('/preferences', prefs).then(r => r.data),
+  setFavoritePlayer: (playerId: number) => api.put(`/preferences/favorite-player/${playerId}`).then(r => r.data),
+  getStaff: () => api.get('/staff').then(r => r.data),
+};

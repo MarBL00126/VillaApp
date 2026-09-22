@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { PlayerCard } from '../components/PlayerCard';
@@ -6,6 +6,8 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
 import { theme } from '../theme';
 import type { Player } from '../types';
+import api from '../services/api';
+import { membershipService } from '../services/membershipService';
 
 const ALL = 'Todos';
 const POSITIONS = [ALL, 'Base', 'Escolta', 'Alero', 'Ala-Pivot', 'Pivot'];
@@ -14,6 +16,29 @@ export function PlayersScreen() {
   const navigate = useNavigate();
   const { data: players, loading, error, refetch } = useFetch<Player[]>('/players');
   const [filter, setFilter] = useState(ALL);
+  const [favoritePlayerId, setFavoritePlayerId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) return;
+    membershipService.getPreferences()
+      .then((prefs) => setFavoritePlayerId(prefs.favoritePlayerId ?? prefs.favoritePlayer?.id ?? null))
+      .catch(() => setFavoritePlayerId(null));
+  }, []);
+
+  const handleFavorite = async (playerId: number) => {
+    if (!localStorage.getItem('token')) {
+      navigate('/login');
+      return;
+    }
+    if (favoritePlayerId === playerId) {
+      await api.delete(`/players/${playerId}/favorite`);
+      setFavoritePlayerId(null);
+    } else {
+      await api.post(`/players/${playerId}/favorite`);
+      setFavoritePlayerId(playerId);
+    }
+    refetch();
+  };
 
   const filtered = players
     ? filter === ALL
@@ -56,6 +81,8 @@ export function PlayersScreen() {
             <PlayerCard
               key={player.id}
               player={player}
+              isFavorite={favoritePlayerId === player.id}
+              onFavorite={() => handleFavorite(player.id)}
               onClick={() => navigate(`/players/${player.id}`)}
             />
           ))}

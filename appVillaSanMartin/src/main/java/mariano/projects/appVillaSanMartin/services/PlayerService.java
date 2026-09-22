@@ -18,15 +18,19 @@ public class PlayerService {
     }
 
     public List<PlayerEntity> getAll() {
-        return playerRepository.findAll();
+        return playerRepository.findByActiveTrue();
     }
 
     public PlayerEntity getById(int id) {
-        return playerRepository.findById(id)
+        PlayerEntity player = playerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found"));
+        if (!player.isActive()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found");
+        }
+        return player;
     }
 
     public List<PlayerEntity> getByTeam(int teamId) {
-        return playerRepository.findByTeam_Id(teamId);
+        return playerRepository.findByTeam_IdAndActiveTrue(teamId);
     }
 }

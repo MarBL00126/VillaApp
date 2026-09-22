@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -48,6 +49,10 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/players/*/favorite").authenticated()
+                                                .requestMatchers(HttpMethod.DELETE, "/api/players/*/favorite").authenticated()
+                                                .requestMatchers("/api/benefits/my").authenticated()
                                                 .requestMatchers(
                                                                 "/",
                                                                 "/index.html",
@@ -61,10 +66,17 @@ public class SecurityConfig {
                                                                 "/login", "/register", "/players/**", "/fixture",
                                                                 "/stats", "/profile", "/matches/**", "/orders/**",
                                                                 "/payment/**", "/admin/**",
+                                                                "/game/**", "/rewards/**", "/community/**",
+                                                                "/cantina/**", "/shop/**", "/news/**", "/media/**",
                                                                 "/api/users/register", "/api/users/login",
                                                                 "/api/auth/**",
-                                                                "/api/teams/**", "/api/players/**", "/api/matches/**",
-                                                                "/api/fixture/**", "/api/stats/**", "/api/webhooks/**")
+                                                                "/api/teams/**", "/api/team/**", "/api/players/**", "/api/matches/**",
+                                                                "/api/fixture/**", "/api/stats/**", "/api/webhooks/**",
+                                                                "/api/products/**", "/api/news/**", "/api/galleries/**",
+                                                                "/api/videos/**", "/api/cantina/**", "/api/cantina/orders/track/**",
+                                                                "/api/membership/types", "/api/membership/check/**",
+                                                                "/api/benefits", "/api/benefits/**",
+                                                                "/api/staff", "/api/staff/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/reservations/**").authenticated()
                                                 .requestMatchers("/api/orders/validate-qr").hasRole("ADMIN")

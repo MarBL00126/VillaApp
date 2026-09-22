@@ -25,4 +25,11 @@ public class TeamService {
         return teamRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found"));
     }
+
+    public TeamEntity getPrimaryTeam() {
+        return teamRepository.findByPrimaryTeamTrue()
+                .orElseGet(() -> teamRepository.findAll().stream()
+                        .findFirst()
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found")));
+    }
 }

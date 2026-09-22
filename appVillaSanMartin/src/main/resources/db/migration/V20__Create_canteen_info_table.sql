@@ -10,4 +10,4 @@ CREATE TABLE canteen_info (
     updated_at       TIMESTAMP DEFAULT NOW()
 );
 INSERT INTO canteen_info (address, phone, schedule, payment_methods, is_open, maps_url) VALUES
-  ('Estadio Villa San Martín — Acceso Norte', '2664-000000', 'Días de partido: 2hs antes del inicio hasta el final del juego', 'Efectivo / MercadoPago / Transferencia', FALSE, 'https://maps.google.com');
+  ('Estadio Villa San Martín — Saavedra 135', '362-4549096', 'Días de partido: 2hs antes del inicio hasta el final del juego', 'Efectivo / MercadoPago / Transferencia', FALSE, 'https://maps.app.goo.gl/EFH81er6av5v9ovX9');

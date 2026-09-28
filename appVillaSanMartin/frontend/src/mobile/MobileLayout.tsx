@@ -23,6 +23,8 @@ const navItems: NavItem[] = [
   { path: '/stats', label: 'Stats', icon: 'S', end: false },
   { path: '/standings', label: 'Posiciones', shortLabel: 'Tabla', icon: 'X', end: false },
   { path: '/stats/leaders', label: 'Lideres', icon: 'L', end: false },
+  { path: '/press/request', label: 'Solicitar prensa', shortLabel: 'Prensa', icon: 'Q', end: false },
+  { path: '/press/my', label: 'Mis acreditaciones', shortLabel: 'Acred.', icon: 'Y', end: false },
   { path: '/membership', label: 'Membresia', shortLabel: 'Socios', icon: 'O', end: false },
   { path: '/benefits', label: 'Beneficios', icon: 'B', end: false },
   { path: '/game', label: 'Juego', icon: 'J', end: false },
@@ -45,7 +47,14 @@ export function MobileLayout() {
 
   const visibleItems = useMemo(() => {
     const items = user?.role === 'ADMIN'
-      ? [...navItems, { path: '/admin', label: 'Admin', icon: 'G', end: false }]
+      ? [
+          ...navItems,
+          { path: '/admin', label: 'Admin', icon: 'G', end: false },
+          { path: '/admin/access/scan', label: 'Escanear accesos', shortLabel: 'Scan', icon: 'V', end: false },
+          { path: '/admin/press', label: 'Prensa admin', shortLabel: 'Prensa+', icon: 'Z', end: false },
+          { path: '/admin/config', label: 'Config admin', shortLabel: 'Config', icon: 'W', end: false },
+          { path: '/admin/stadium', label: 'Estadio admin', shortLabel: 'Estadio+', icon: 'H', end: false },
+        ]
       : navItems;
 
     return items;

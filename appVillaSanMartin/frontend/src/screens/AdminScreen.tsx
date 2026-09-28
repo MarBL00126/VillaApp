@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { theme } from '../theme';
 import type { AdminDashboardFull, AppConfig, CantinaMenuCategory, CantinaMenuItem, CantinaOrder, Match, Membership, Player } from '../types';
 import { adminService, type AdminResourceInfo, type CategoryPayload, type MatchPayload, type MenuItemPayload, type PlayerPayload } from '../services/adminService';
@@ -339,6 +340,10 @@ export function AdminScreen() {
               <button style={styles.primaryBtn} onClick={() => setTab('orders')}>Ver pedidos</button>
               <button style={styles.primaryBtn} onClick={() => setTab('members')}>Buscar socios</button>
               <button style={styles.primaryBtn} onClick={() => setTab('config')}>Editar config</button>
+              <Link style={styles.primaryLink} to="/admin/access/scan">Escanear accesos</Link>
+              <Link style={styles.primaryLink} to="/admin/press">Prensa admin</Link>
+              <Link style={styles.secondaryLink} to="/admin/stadium">Estadio admin</Link>
+              <Link style={styles.secondaryLink} to="/admin/config">Config pantalla completa</Link>
             </div>
           </div>
         </section>
@@ -423,6 +428,9 @@ export function AdminScreen() {
                   <strong>{match.isLocal ? 'Local' : 'Visitante'} vs {match.opponent}</strong>
                   <span style={styles.muted}>{new Date(match.matchDate).toLocaleString('es-AR')} · {match.teamPoints}-{match.opponentPoints}</span>
                 </div>
+                <Link style={styles.secondaryLink} to={`/game-center/${match.id}`}>Game Center</Link>
+                <Link style={styles.secondaryLink} to={`/admin/game-center/${match.id}`}>Cargar vivo</Link>
+                <Link style={styles.secondaryLink} to={`/admin/access/logs/${match.id}`}>Logs acceso</Link>
                 <button style={styles.secondaryBtn} onClick={() => editMatch(match)}>Editar</button>
                 <button style={styles.dangerBtn} onClick={() => run(async () => { await adminService.deleteMatch(match.id); await refreshAfterSave('Partido eliminado.'); })}>Eliminar</button>
               </div>
@@ -775,6 +783,8 @@ const styles: Record<string, React.CSSProperties> = {
   actions: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
   primaryBtn: { border: 'none', borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.primary, color: theme.colors.white, padding: '9px 12px', cursor: 'pointer', fontWeight: 800 },
   secondaryBtn: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.primary, padding: '8px 11px', cursor: 'pointer', fontWeight: 700 },
+  primaryLink: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', border: 'none', borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.primary, color: theme.colors.white, padding: '9px 12px', cursor: 'pointer', fontWeight: 800, textDecoration: 'none' },
+  secondaryLink: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.primary, padding: '8px 11px', cursor: 'pointer', fontWeight: 700, textDecoration: 'none' },
   dangerBtn: { border: `1px solid ${theme.colors.error}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.error, padding: '8px 11px', cursor: 'pointer', fontWeight: 700 },
   list: { display: 'flex', flexDirection: 'column', gap: '10px' },
   row: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: theme.colors.surface, border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.md, padding: '10px' },

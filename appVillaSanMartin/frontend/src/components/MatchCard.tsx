@@ -57,16 +57,25 @@ export function MatchCard({ match }: Props) {
         <>
         <p style={{ ...styles.score, color: theme.colors.secondary }}>Próximo</p>
         
-          {!past && (
-            <button
-              style={styles.buyButton}
-              onClick={() => navigate(`/matches/${match.id}/tickets`)}
-            >
-              Comprar entrada
-            </button>
-          )}
           </>
       )}
+
+      <div style={styles.actions}>
+        {!past && (
+          <button
+            style={styles.buyButton}
+            onClick={() => navigate(`/matches/${match.id}/tickets`)}
+          >
+            Comprar entrada
+          </button>
+        )}
+        <button
+          style={styles.gameCenterButton}
+          onClick={() => navigate(`/game-center/${match.id}`)}
+        >
+          Game Center
+        </button>
+      </div>
     </div>
   );
 }
@@ -105,7 +114,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   buyButton: {
   width: '100%',
-  marginTop: '1rem',
   padding: '0.75rem 1rem',
   border: 'none',
   borderRadius: theme.borderRadius.md,
@@ -115,6 +123,23 @@ const styles: Record<string, React.CSSProperties> = {
   fontWeight: 700,
   cursor: 'pointer',
 },
+  gameCenterButton: {
+  width: '100%',
+  padding: '0.75rem 1rem',
+  border: `1px solid ${theme.colors.primary}`,
+  borderRadius: theme.borderRadius.md,
+  backgroundColor: theme.colors.surface,
+  color: theme.colors.primary,
+  fontSize: theme.fontSizes.sm,
+  fontWeight: 700,
+  cursor: 'pointer',
+},
+  actions: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginTop: '1rem',
+    flexWrap: 'wrap',
+  },
   date: {
     color: theme.colors.textMuted,
     fontSize: theme.fontSizes.sm,

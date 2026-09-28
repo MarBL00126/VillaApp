@@ -88,9 +88,17 @@ export function HomeScreen() {
       {/* Accesos r�pidos */}
       <h2 style={styles.sectionTitle}>Accesos r�pidos</h2>
       <div style={styles.quickLinks}>
-        <button onClick={() => navigate("/players")} style={styles.linkBtn}>?? Plantel</button>
-        <button onClick={() => navigate("/fixture")} style={styles.linkBtn}>?? Fixture</button>
-        <button onClick={() => navigate("/stats")} style={styles.linkBtn}>?? Estad�sticas</button>
+        <button onClick={() => navigate("/players")} style={styles.linkBtn}>Plantel</button>
+        <button onClick={() => navigate("/fixture")} style={styles.linkBtn}>Fixture</button>
+        <button onClick={() => navigate("/stats")} style={styles.linkBtn}>Estadisticas</button>
+        <button onClick={() => navigate("/standings")} style={styles.linkBtn}>Posiciones</button>
+        <button onClick={() => navigate("/stats/leaders")} style={styles.linkBtn}>Lideres</button>
+        <button onClick={() => navigate("/stadium")} style={styles.linkBtn}>Estadio</button>
+        <button onClick={() => navigate("/press/request")} style={styles.linkBtn}>Prensa</button>
+        <button onClick={() => navigate("/press/my")} style={styles.linkBtn}>Mis acreditaciones</button>
+        {nextMatch && (
+          <button onClick={() => navigate(`/game-center/${nextMatch.id}`)} style={styles.linkBtn}>Game Center</button>
+        )}
       </div>
     </div>
   );

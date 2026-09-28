@@ -50,6 +50,12 @@ public class SecurityConfig {
 
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/game-center/*/state").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/game-center/*/plays").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/game-center/*/box-score/*").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/game-center/*/shot-chart").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/standings").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/standings/*").hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.POST, "/api/players/*/favorite").authenticated()
                                                 .requestMatchers(HttpMethod.DELETE, "/api/players/*/favorite").authenticated()
                                                 .requestMatchers("/api/benefits/my").authenticated()
@@ -72,6 +78,7 @@ public class SecurityConfig {
                                                                 "/api/auth/**",
                                                                 "/api/teams/**", "/api/team/**", "/api/players/**", "/api/matches/**",
                                                                 "/api/fixture/**", "/api/stats/**", "/api/webhooks/**",
+                                                                "/api/game-center/**", "/api/standings/**",
                                                                 "/api/products/**", "/api/news/**", "/api/galleries/**",
                                                                 "/api/videos/**", "/api/cantina/**", "/api/cantina/orders/track/**",
                                                                 "/api/membership/types", "/api/membership/check/**",

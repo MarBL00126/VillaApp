@@ -1,32 +1,25 @@
-# React + TypeScript + Vite
+# Frontend Villa San Martin
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Este proyecto contiene dos frontends que conviven sobre el mismo codigo base:
 
-Currently, two official plugins are available:
+- `webapp`: usa `src/App.tsx`, `src/components/Layout.tsx` y `src/index.css`.
+- `mobile app`: usa `src/mobile/MobileApp.tsx`, `src/mobile/MobileLayout.tsx` y `src/mobile/mobile.css`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Ambos comparten pantallas, servicios, hooks, tipos y assets. La separacion esta en la entrada de React: `src/main.tsx` carga la app web o mobile segun el modo de Vite.
 
-## React Compiler
+## Comandos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm run dev:web
+npm run dev:mobile
+npm run build:web
+npm run build:mobile
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`npm run build` equivale a `build:web` y genera `dist`.
+
+`npm run build:mobile` genera `dist-mobile`. Capacitor apunta a ese directorio, por eso para sincronizar Android se puede usar:
+
+```bash
+npm run cap:sync:android
+```

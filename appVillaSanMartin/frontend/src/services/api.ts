@@ -20,6 +20,8 @@ function isPublicReadRequest(method?: string, url?: string) {
     /^\/players(?:\/\d+)?$/,
     /^\/stats(?:\/|$)/,
     /^\/matches(?:\/|$)/,
+    /^\/game-center(?:\/|$)/,
+    /^\/standings(?:\/|$)/,
     /^\/fixture(?:\/|$)/,
     /^\/products(?:\/|$)/,
     /^\/news(?:\/|$)/,

@@ -1,5 +1,16 @@
 import api from './api';
-import type { CantinaMenuCategory, CantinaMenuItem, Match, Player } from '../types';
+import type {
+  AdminDashboardFull,
+  AppConfig,
+  CantinaMenuCategory,
+  CantinaMenuItem,
+  CantinaOrder,
+  Match,
+  Membership,
+  Product,
+  ProductVariant,
+  Player,
+} from '../types';
 
 export interface PlayerPayload {
   name: string;
@@ -46,6 +57,7 @@ export interface AdminResourceInfo {
 
 export const adminService = {
   getDashboard: () => api.get<Record<string, number>>('/admin/dashboard').then((r) => r.data),
+  getDashboardFull: () => api.get<AdminDashboardFull>('/admin/dashboard/full').then((r) => r.data),
 
   getPlayers: () => api.get<Player[]>('/admin/players').then((r) => r.data),
   savePlayer: (player: PlayerPayload, id?: number) =>
@@ -70,6 +82,22 @@ export const adminService = {
     (id ? api.put<CantinaMenuItem>(`/admin/cantina/items/${id}`, item) : api.post<CantinaMenuItem>('/admin/cantina/items', item)).then((r) => r.data),
   setCantinaItemAvailable: (id: number, available: boolean) =>
     api.put<CantinaMenuItem>(`/admin/cantina/items/${id}/available`, { available }).then((r) => r.data),
+
+  getCanteenOrders: () => api.get<CantinaOrder[]>('/admin/orders/cantina').then((r) => r.data),
+  setCanteenOrderStatus: (id: number, status: string) =>
+    api.put<CantinaOrder>(`/admin/orders/cantina/${id}/status`, { status }).then((r) => r.data),
+
+  getProductsAdmin: () => api.get<Product[]>('/admin/products').then((r) => r.data),
+  setProductVariantStock: (productId: number, variantId: number, stock: number) =>
+    api.put<ProductVariant>(`/admin/products/${productId}/stock/${variantId}`, { stock }).then((r) => r.data),
+
+  getMembers: () => api.get<Membership[]>('/admin/members').then((r) => r.data),
+  setMemberStatus: (id: number, status: string) =>
+    api.put<Membership>(`/admin/members/${id}/status`, { status }).then((r) => r.data),
+
+  getConfig: () => api.get<AppConfig[]>('/admin/config').then((r) => r.data),
+  setConfigValue: (key: string, value: string) =>
+    api.put<AppConfig>(`/admin/config/${encodeURIComponent(key)}`, { value }).then((r) => r.data),
 
   getResources: () => api.get<AdminResourceInfo[]>('/admin/resources').then((r) => r.data),
   getResourceRows: (resource: string) => api.get<Record<string, unknown>[]>(`/admin/resources/${resource}`).then((r) => r.data),

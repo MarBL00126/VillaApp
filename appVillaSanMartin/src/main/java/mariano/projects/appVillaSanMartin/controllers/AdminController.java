@@ -19,13 +19,24 @@ import org.springframework.web.server.ResponseStatusException;
 
 import mariano.projects.appVillaSanMartin.entities.CanteenMenuCategoryEntity;
 import mariano.projects.appVillaSanMartin.entities.CanteenMenuItemEntity;
+import mariano.projects.appVillaSanMartin.entities.CanteenOrderEntity;
+import mariano.projects.appVillaSanMartin.entities.AppConfigEntity;
 import mariano.projects.appVillaSanMartin.entities.MatchEntity;
+import mariano.projects.appVillaSanMartin.entities.MembershipEntity;
+import mariano.projects.appVillaSanMartin.entities.ProductEntity;
+import mariano.projects.appVillaSanMartin.entities.ProductVariantEntity;
 import mariano.projects.appVillaSanMartin.entities.PlayerEntity;
 import mariano.projects.appVillaSanMartin.entities.TeamEntity;
+import mariano.projects.appVillaSanMartin.repositories.AppConfigRepository;
+import mariano.projects.appVillaSanMartin.repositories.CanteenOrderRepository;
 import mariano.projects.appVillaSanMartin.repositories.CanteenMenuCategoryRepository;
 import mariano.projects.appVillaSanMartin.repositories.CanteenMenuItemRepository;
 import mariano.projects.appVillaSanMartin.repositories.MatchRepository;
+import mariano.projects.appVillaSanMartin.repositories.MembershipFeeRepository;
+import mariano.projects.appVillaSanMartin.repositories.MembershipRepository;
 import mariano.projects.appVillaSanMartin.repositories.PlayerRepository;
+import mariano.projects.appVillaSanMartin.repositories.ProductRepository;
+import mariano.projects.appVillaSanMartin.repositories.ProductVariantRepository;
 import mariano.projects.appVillaSanMartin.repositories.TeamRepository;
 
 @RestController
@@ -36,18 +47,36 @@ public class AdminController {
     private final TeamRepository teamRepository;
     private final CanteenMenuCategoryRepository categoryRepository;
     private final CanteenMenuItemRepository menuItemRepository;
+    private final CanteenOrderRepository canteenOrderRepository;
+    private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final MembershipRepository membershipRepository;
+    private final MembershipFeeRepository membershipFeeRepository;
+    private final AppConfigRepository appConfigRepository;
 
     public AdminController(
             PlayerRepository playerRepository,
             MatchRepository matchRepository,
             TeamRepository teamRepository,
             CanteenMenuCategoryRepository categoryRepository,
-            CanteenMenuItemRepository menuItemRepository) {
+            CanteenMenuItemRepository menuItemRepository,
+            CanteenOrderRepository canteenOrderRepository,
+            ProductRepository productRepository,
+            ProductVariantRepository productVariantRepository,
+            MembershipRepository membershipRepository,
+            MembershipFeeRepository membershipFeeRepository,
+            AppConfigRepository appConfigRepository) {
         this.playerRepository = playerRepository;
         this.matchRepository = matchRepository;
         this.teamRepository = teamRepository;
         this.categoryRepository = categoryRepository;
         this.menuItemRepository = menuItemRepository;
+        this.canteenOrderRepository = canteenOrderRepository;
+        this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
+        this.membershipRepository = membershipRepository;
+        this.membershipFeeRepository = membershipFeeRepository;
+        this.appConfigRepository = appConfigRepository;
     }
 
     @GetMapping("/dashboard")
@@ -57,6 +86,29 @@ public class AdminController {
                 "matches", matchRepository.count(),
                 "menuItems", menuItemRepository.count(),
                 "menuCategories", categoryRepository.count());
+    }
+
+    @GetMapping("/dashboard/full")
+    public Map<String, Long> fullDashboard() {
+        long activeMembers = membershipRepository.findAll().stream()
+                .filter(member -> "ACTIVE".equalsIgnoreCase(member.getStatus()))
+                .count();
+        long pendingFees = membershipFeeRepository.findAll().stream()
+                .filter(fee -> !"PAID".equalsIgnoreCase(fee.getStatus()))
+                .count();
+        long ordersToday = canteenOrderRepository.findAll().stream()
+                .filter(order -> order.getCreatedAt() != null && order.getCreatedAt().toLocalDate().equals(LocalDate.now()))
+                .count();
+
+        return Map.of(
+                "players", playerRepository.count(),
+                "matches", matchRepository.count(),
+                "menuItems", menuItemRepository.count(),
+                "menuCategories", categoryRepository.count(),
+                "activeMembers", activeMembers,
+                "pendingFees", pendingFees,
+                "canteenOrdersToday", ordersToday,
+                "products", productRepository.count());
     }
 
     @GetMapping("/players")
@@ -151,6 +203,69 @@ public class AdminController {
         return menuItemRepository.save(item);
     }
 
+    @GetMapping("/orders/cantina")
+    public List<CanteenOrderEntity> getCanteenOrders() {
+        return canteenOrderRepository.findAll().stream()
+                .sorted((a, b) -> nullSafeDate(b.getCreatedAt()).compareTo(nullSafeDate(a.getCreatedAt())))
+                .toList();
+    }
+
+    @PutMapping("/orders/cantina/{id}/status")
+    public CanteenOrderEntity updateCanteenOrderStatus(@PathVariable int id, @RequestBody StatusRequest body) {
+        CanteenOrderEntity order = canteenOrderRepository.findById(id)
+                .orElseThrow(() -> notFound("Pedido de cantina no encontrado"));
+        order.setStatus(required(body.status(), "Estado requerido"));
+        if ("READY".equalsIgnoreCase(order.getStatus()) && order.getReadyAt() == null) {
+            order.setReadyAt(LocalDateTime.now());
+        }
+        return canteenOrderRepository.save(order);
+    }
+
+    @GetMapping("/products")
+    public List<ProductEntity> getProducts() {
+        return productRepository.findAll();
+    }
+
+    @PutMapping("/products/{id}/stock/{variantId}")
+    public ProductVariantEntity updateProductStock(
+            @PathVariable int id,
+            @PathVariable int variantId,
+            @RequestBody StockRequest body) {
+        ProductVariantEntity variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> notFound("Variante no encontrada"));
+        if (variant.getProduct() == null || !variant.getProduct().getId().equals(id)) {
+            throw notFound("La variante no pertenece al producto indicado");
+        }
+        variant.setStock(body.stock() == null ? 0 : body.stock());
+        return productVariantRepository.save(variant);
+    }
+
+    @GetMapping("/members")
+    public List<MembershipEntity> getMembers() {
+        return membershipRepository.findAll();
+    }
+
+    @PutMapping("/members/{id}/status")
+    public MembershipEntity updateMemberStatus(@PathVariable int id, @RequestBody StatusRequest body) {
+        MembershipEntity membership = membershipRepository.findById(id)
+                .orElseThrow(() -> notFound("Socio no encontrado"));
+        membership.setStatus(required(body.status(), "Estado requerido"));
+        return membershipRepository.save(membership);
+    }
+
+    @GetMapping("/config")
+    public List<AppConfigEntity> getConfig() {
+        return appConfigRepository.findAll();
+    }
+
+    @PutMapping("/config/{key}")
+    public AppConfigEntity updateConfig(@PathVariable String key, @RequestBody ConfigValueRequest body) {
+        AppConfigEntity config = appConfigRepository.findByKey(key)
+                .orElseThrow(() -> notFound("Configuracion no encontrada"));
+        config.setValue(required(body.value(), "Valor requerido"));
+        return appConfigRepository.save(config);
+    }
+
     private PlayerEntity applyPlayer(PlayerEntity player, PlayerRequest body) {
         player.setName(required(body.name(), "Nombre requerido"));
         player.setSurname(required(body.surname(), "Apellido requerido"));
@@ -223,6 +338,10 @@ public class AdminController {
         return new ResponseStatusException(HttpStatus.NOT_FOUND, message);
     }
 
+    private LocalDateTime nullSafeDate(LocalDateTime date) {
+        return date == null ? LocalDateTime.MIN : date;
+    }
+
     public record PlayerRequest(
             String name,
             String surname,
@@ -262,5 +381,14 @@ public class AdminController {
     }
 
     public record AvailableRequest(Boolean available) {
+    }
+
+    public record StatusRequest(String status) {
+    }
+
+    public record StockRequest(Integer stock) {
+    }
+
+    public record ConfigValueRequest(String value) {
     }
 }

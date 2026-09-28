@@ -65,6 +65,9 @@ import mariano.projects.appVillaSanMartin.entities.RewardRedemptionEntity;
 import mariano.projects.appVillaSanMartin.entities.ShopOrderEntity;
 import mariano.projects.appVillaSanMartin.entities.ShopOrderItemEntity;
 import mariano.projects.appVillaSanMartin.entities.StaffEntity;
+import mariano.projects.appVillaSanMartin.entities.StadiumInfoEntity;
+import mariano.projects.appVillaSanMartin.entities.StadiumSectorEntity;
+import mariano.projects.appVillaSanMartin.entities.StadiumServiceEntity;
 import mariano.projects.appVillaSanMartin.entities.TeamEntity;
 import mariano.projects.appVillaSanMartin.entities.TicketTypeEntity;
 import mariano.projects.appVillaSanMartin.entities.TriviaAttemptEntity;
@@ -179,6 +182,9 @@ public class AdminResourceController {
     private Map<String, ResourceDefinition> buildResources() {
         Map<String, ResourceDefinition> map = new LinkedHashMap<>();
         put(map, "teams", "Equipos", "Clubes/equipos y datos institucionales", TeamEntity.class);
+        put(map, "stadium-info", "Info estadio", "Datos generales del estadio", StadiumInfoEntity.class);
+        put(map, "stadium-sectors", "Sectores estadio", "Sectores, puertas y capacidades", StadiumSectorEntity.class);
+        put(map, "stadium-services", "Servicios estadio", "Servicios y ubicaciones del estadio", StadiumServiceEntity.class);
         put(map, "staff", "Cuerpo tecnico", "Entrenadores, asistentes y staff", StaffEntity.class);
         put(map, "players-stats", "Estadisticas jugadores", "Numeros de temporada por jugador", PlayerStatsEntity.class);
         put(map, "ticket-types", "Entradas", "Tipos de entrada por partido", TicketTypeEntity.class);

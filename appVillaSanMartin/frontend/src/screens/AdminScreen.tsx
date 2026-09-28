@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { theme } from '../theme';
-import type { CantinaMenuCategory, CantinaMenuItem, Match, Player } from '../types';
+import type { AdminDashboardFull, AppConfig, CantinaMenuCategory, CantinaMenuItem, CantinaOrder, Match, Membership, Player } from '../types';
 import { adminService, type AdminResourceInfo, type CategoryPayload, type MatchPayload, type MenuItemPayload, type PlayerPayload } from '../services/adminService';
 
-type Tab = 'players' | 'matches' | 'cantina' | 'advanced';
+type Tab = 'dashboard' | 'players' | 'matches' | 'news' | 'shop' | 'orders' | 'members' | 'cantina' | 'config' | 'stadium' | 'advanced';
 
 const nowForInput = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
@@ -42,10 +42,17 @@ const emptyItem = (): MenuItemPayload => ({
 export function AdminScreen() {
   const [tab, setTab] = useState<Tab>('players');
   const [dashboard, setDashboard] = useState<Record<string, number>>({});
+  const [dashboardFull, setDashboardFull] = useState<Partial<AdminDashboardFull>>({});
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [categories, setCategories] = useState<CantinaMenuCategory[]>([]);
   const [items, setItems] = useState<CantinaMenuItem[]>([]);
+  const [canteenOrders, setCanteenOrders] = useState<CantinaOrder[]>([]);
+  const [members, setMembers] = useState<Membership[]>([]);
+  const [configs, setConfigs] = useState<AppConfig[]>([]);
+  const [variantRows, setVariantRows] = useState<Record<string, unknown>[]>([]);
+  const [configDrafts, setConfigDrafts] = useState<Record<string, string>>({});
+  const [stockDrafts, setStockDrafts] = useState<Record<number, number>>({});
   const [resources, setResources] = useState<AdminResourceInfo[]>([]);
   const [selectedResource, setSelectedResource] = useState('');
   const [resourceRows, setResourceRows] = useState<Record<string, unknown>[]>([]);
@@ -66,19 +73,31 @@ export function AdminScreen() {
 
   const loadData = async () => {
     setError('');
-    const [summary, playerRows, matchRows, categoryRows, itemRows, resourceRows] = await Promise.all([
+    const [summary, fullSummary, playerRows, matchRows, categoryRows, itemRows, orderRows, memberRows, configRows, resourceRows, variants] = await Promise.all([
       adminService.getDashboard(),
+      adminService.getDashboardFull().catch(() => ({})),
       adminService.getPlayers(),
       adminService.getMatches(),
       adminService.getCantinaCategories(),
       adminService.getCantinaItems(),
+      adminService.getCanteenOrders().catch(() => []),
+      adminService.getMembers().catch(() => []),
+      adminService.getConfig().catch(() => []),
       adminService.getResources(),
+      adminService.getResourceRows('product-variants').catch(() => []),
     ]);
     setDashboard(summary);
+    setDashboardFull(fullSummary);
     setPlayers(playerRows);
     setMatches([...matchRows].sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()));
     setCategories(categoryRows);
     setItems(itemRows);
+    setCanteenOrders(orderRows);
+    setMembers(memberRows);
+    setConfigs(configRows);
+    setConfigDrafts(Object.fromEntries(configRows.map((config) => [config.key, config.value])));
+    setVariantRows(variants);
+    setStockDrafts(Object.fromEntries(variants.map((row) => [Number(row.id), Number(row.stock ?? 0)])));
     setResources(resourceRows);
     if (!selectedResource && resourceRows.length > 0) {
       setSelectedResource(resourceRows[0].key);
@@ -235,6 +254,40 @@ export function AdminScreen() {
     await refreshAfterSave('Recurso actualizado.');
   };
 
+  const openAdvancedResource = async (resource: string) => {
+    setSelectedResource(resource);
+    setTab('advanced');
+    await loadResourceRows(resource);
+  };
+
+  const updateOrderStatus = async (id: number, status: string) => {
+    await adminService.setCanteenOrderStatus(id, status);
+    await refreshAfterSave('Estado del pedido actualizado.');
+  };
+
+  const updateMemberStatus = async (id: number, status: string) => {
+    await adminService.setMemberStatus(id, status);
+    await refreshAfterSave('Estado del socio actualizado.');
+  };
+
+  const updateConfig = async (config: AppConfig) => {
+    await adminService.setConfigValue(config.key, configDrafts[config.key] ?? config.value);
+    await refreshAfterSave('Configuracion actualizada.');
+  };
+
+  const updateVariantStock = async (row: Record<string, unknown>) => {
+    const variantId = Number(row.id);
+    const product = row.product as { id?: number } | undefined;
+    const productId = Number(product?.id);
+    const stock = stockDrafts[variantId] ?? Number(row.stock ?? 0);
+    if (Number.isFinite(productId) && productId > 0) {
+      await adminService.setProductVariantStock(productId, variantId, stock);
+    } else {
+      await adminService.updateResourceRow('product-variants', variantId, { ...row, stock });
+    }
+    await refreshAfterSave('Stock actualizado.');
+  };
+
   if (loading) return <div style={styles.page}>Cargando panel admin...</div>;
 
   return (
@@ -247,21 +300,49 @@ export function AdminScreen() {
       </div>
 
       <div style={styles.summaryGrid}>
-        <Summary label="Jugadores" value={dashboard.players} />
-        <Summary label="Partidos" value={dashboard.matches} />
-        <Summary label="Items cantina" value={dashboard.menuItems} />
-        <Summary label="Categorias" value={dashboard.menuCategories} />
+        <Summary label="Jugadores" value={dashboardFull.players ?? dashboard.players} />
+        <Summary label="Partidos" value={dashboardFull.matches ?? dashboard.matches} />
+        <Summary label="Socios activos" value={dashboardFull.activeMembers} />
+        <Summary label="Pedidos hoy" value={dashboardFull.canteenOrdersToday} />
       </div>
 
       {message && <p style={styles.success}>{message}</p>}
       {error && <p style={styles.error}>{error}</p>}
 
       <div style={styles.tabs}>
+        <button style={{ ...styles.tab, ...(tab === 'dashboard' ? styles.activeTab : {}) }} onClick={() => setTab('dashboard')}>Dashboard</button>
         <button style={{ ...styles.tab, ...(tab === 'players' ? styles.activeTab : {}) }} onClick={() => setTab('players')}>Plantel</button>
         <button style={{ ...styles.tab, ...(tab === 'matches' ? styles.activeTab : {}) }} onClick={() => setTab('matches')}>Partidos</button>
+        <button style={{ ...styles.tab, ...(tab === 'news' ? styles.activeTab : {}) }} onClick={() => setTab('news')}>Noticias</button>
+        <button style={{ ...styles.tab, ...(tab === 'shop' ? styles.activeTab : {}) }} onClick={() => setTab('shop')}>Tienda</button>
+        <button style={{ ...styles.tab, ...(tab === 'orders' ? styles.activeTab : {}) }} onClick={() => setTab('orders')}>Pedidos</button>
+        <button style={{ ...styles.tab, ...(tab === 'members' ? styles.activeTab : {}) }} onClick={() => setTab('members')}>Socios</button>
         <button style={{ ...styles.tab, ...(tab === 'cantina' ? styles.activeTab : {}) }} onClick={() => setTab('cantina')}>Cantina</button>
+        <button style={{ ...styles.tab, ...(tab === 'config' ? styles.activeTab : {}) }} onClick={() => setTab('config')}>Config</button>
+        <button style={{ ...styles.tab, ...(tab === 'stadium' ? styles.activeTab : {}) }} onClick={() => setTab('stadium')}>Estadio</button>
         <button style={{ ...styles.tab, ...(tab === 'advanced' ? styles.activeTab : {}) }} onClick={() => setTab('advanced')}>Avanzado</button>
       </div>
+
+      {tab === 'dashboard' && (
+        <section>
+          <div style={styles.summaryGrid}>
+            <Summary label="Productos" value={dashboardFull.products} />
+            <Summary label="Cuotas pendientes" value={dashboardFull.pendingFees} />
+            <Summary label="Items cantina" value={dashboardFull.menuItems ?? dashboard.menuItems} />
+            <Summary label="Categorias" value={dashboardFull.menuCategories ?? dashboard.menuCategories} />
+          </div>
+          <div style={styles.form}>
+            <h2 style={styles.sectionTitle}>Acciones rapidas</h2>
+            <div style={styles.actions}>
+              <button style={styles.primaryBtn} onClick={() => openAdvancedResource('news')}>Gestionar noticias</button>
+              <button style={styles.primaryBtn} onClick={() => setTab('shop')}>Actualizar stock</button>
+              <button style={styles.primaryBtn} onClick={() => setTab('orders')}>Ver pedidos</button>
+              <button style={styles.primaryBtn} onClick={() => setTab('members')}>Buscar socios</button>
+              <button style={styles.primaryBtn} onClick={() => setTab('config')}>Editar config</button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {tab === 'players' && (
         <section>
@@ -413,6 +494,123 @@ export function AdminScreen() {
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'news' && (
+        <section>
+          <div style={styles.form}>
+            <h2 style={styles.sectionTitle}>Noticias</h2>
+            <p style={styles.helpText}>Usa el editor avanzado para altas, edicion y eliminacion de noticias y categorias.</p>
+            <div style={styles.actions}>
+              <button style={styles.primaryBtn} onClick={() => openAdvancedResource('news')}>Abrir noticias</button>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('news-categories')}>Abrir categorias</button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {tab === 'shop' && (
+        <section>
+          <div style={styles.form}>
+            <h2 style={styles.sectionTitle}>Tienda y stock</h2>
+            <div style={styles.actions}>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('products')}>Editar productos</button>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('product-categories')}>Editar categorias</button>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('product-variants')}>Editor de variantes</button>
+            </div>
+          </div>
+          <div style={styles.list}>
+            {variantRows.map((row) => {
+              const id = Number(row.id);
+              const product = row.product as { name?: string } | undefined;
+              return (
+                <div key={id} style={styles.row}>
+                  <div style={styles.rowMain}>
+                    <strong>{product?.name ?? 'Producto'} · {String(row.label ?? 'Variante')}</strong>
+                    <span style={styles.muted}>Stock actual: {String(row.stock ?? 0)}</span>
+                  </div>
+                  <input
+                    type="number"
+                    style={{ ...styles.input, width: 110 }}
+                    value={stockDrafts[id] ?? 0}
+                    onChange={(event) => setStockDrafts({ ...stockDrafts, [id]: Number(event.target.value) })}
+                  />
+                  <button style={styles.primaryBtn} onClick={() => run(() => updateVariantStock(row))}>Guardar stock</button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {tab === 'orders' && (
+        <section>
+          <div style={styles.list}>
+            {canteenOrders.map((order) => (
+              <div key={order.id} style={styles.row}>
+                <div style={styles.rowMain}>
+                  <strong>{order.orderNumber}</strong>
+                  <span style={styles.muted}>${order.totalAmount?.toLocaleString('es-AR') ?? 0} · {order.status}</span>
+                </div>
+                {['PENDING', 'PREPARING', 'READY', 'DELIVERED'].map((status) => (
+                  <button key={status} style={order.status === status ? styles.primaryBtn : styles.secondaryBtn} onClick={() => run(() => updateOrderStatus(order.id, status))}>{status}</button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'members' && (
+        <section>
+          <div style={styles.list}>
+            {members.map((member) => (
+              <div key={member.id} style={styles.row}>
+                <div style={styles.rowMain}>
+                  <strong>{member.fullName || `${member.user?.name ?? ''} ${member.user?.surname ?? ''}`.trim() || member.memberNumber}</strong>
+                  <span style={styles.muted}>Nro {member.memberNumber} · {member.status}</span>
+                </div>
+                <button style={member.status === 'ACTIVE' ? styles.primaryBtn : styles.secondaryBtn} onClick={() => run(() => updateMemberStatus(member.id, 'ACTIVE'))}>Activar</button>
+                <button style={member.status === 'SUSPENDED' ? styles.dangerBtn : styles.secondaryBtn} onClick={() => run(() => updateMemberStatus(member.id, 'SUSPENDED'))}>Suspender</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'config' && (
+        <section>
+          <div style={styles.list}>
+            {configs.map((config) => (
+              <div key={config.id} style={styles.row}>
+                <div style={styles.rowMain}>
+                  <strong>{config.key}</strong>
+                  <span style={styles.muted}>{config.type} · {config.description}</span>
+                </div>
+                <input
+                  style={styles.input}
+                  value={configDrafts[config.key] ?? ''}
+                  onChange={(event) => setConfigDrafts({ ...configDrafts, [config.key]: event.target.value })}
+                />
+                <button style={styles.primaryBtn} onClick={() => run(() => updateConfig(config))}>Guardar</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'stadium' && (
+        <section>
+          <div style={styles.form}>
+            <h2 style={styles.sectionTitle}>Estadio</h2>
+            <p style={styles.helpText}>Edita informacion general, sectores y servicios desde el editor avanzado.</p>
+            <div style={styles.actions}>
+              <button style={styles.primaryBtn} onClick={() => openAdvancedResource('stadium-info')}>Info general</button>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('stadium-sectors')}>Sectores</button>
+              <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('stadium-services')}>Servicios</button>
+            </div>
           </div>
         </section>
       )}

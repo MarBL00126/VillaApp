@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Villa San Martín</string>
+    <string name="title_activity_main">Villa San Martín</string>
+    <string name="package_name">ar.com.villaapp.vsm</string>
+    <string name="custom_url_scheme">ar.com.villaapp.vsm</string>
+</resources>

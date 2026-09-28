@@ -25,6 +25,14 @@ export interface AuthUser {
   role: string;
 }
 
+export interface UserResponse {
+  id: number;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+}
+
 // ── Team ──────────────────────────────────────────────
 export interface Team {
   id: number;
@@ -119,3 +127,157 @@ export interface CantinaMenuItem { id: number; category: CantinaMenuCategory; na
 export interface CantinaOrder { id: number; orderNumber: string; status: string; totalAmount: number; paymentMethod: string; createdAt: string; items: CantinaOrderItem[]; }
 export interface CantinaOrderItem { id: number; menuItem: CantinaMenuItem; quantity: number; unitPrice: number; }
 
+export interface LiveMatchState {
+  id: number;
+  matchId: number;
+  status: string;
+  quarter: number;
+  clock: string;
+  homeScore: number;
+  awayScore: number;
+  lastUpdated: string;
+}
+
+export interface PlayByPlay {
+  id: number;
+  matchId: number;
+  quarter: number;
+  clock: string;
+  eventType: string;
+  playerId: number | null;
+  playerName: string | null;
+  teamIsLocal: boolean | null;
+  homeScore: number;
+  awayScore: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface BoxScore {
+  id: number;
+  matchId: number;
+  playerId: number;
+  playerName: string;
+  teamIsLocal: boolean;
+  minutes: number;
+  fgMade: number;
+  fgAtt: number;
+  threeMade: number;
+  threeAtt: number;
+  ftMade: number;
+  ftAtt: number;
+  points: number;
+  rebounds: number;
+  offRebounds: number;
+  defRebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
+  fouls: number;
+  plusMinus: number;
+}
+
+export interface ShotChartShot {
+  id: number;
+  matchId: number;
+  playerId: number;
+  playerName: string;
+  quarter: number;
+  clock: string | null;
+  x: number;
+  y: number;
+  made: boolean;
+  shotType: string;
+  createdAt: string;
+}
+
+export interface GameLeaders {
+  topScorer: BoxScore | null;
+  topRebounder: BoxScore | null;
+  topAssistant: BoxScore | null;
+  topStealer: BoxScore | null;
+  topBlocker: BoxScore | null;
+}
+
+export interface Standing {
+  id: number;
+  teamName: string;
+  teamId: number | null;
+  season: number;
+  zone: string | null;
+  played: number;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  pointDifference: number;
+  streak: string | null;
+  position: number | null;
+}
+
+export interface SeasonLeader {
+  playerId: number;
+  playerName: string;
+  season: number;
+  category: string;
+  total: number;
+  average: number;
+  playedGames: number;
+}
+
+export interface PlayerSeasonStats {
+  playerId: number;
+  playerName: string;
+  season: number;
+  playedGames: number;
+  minutes: number;
+  points: number;
+  rebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
+  fouls: number;
+  pointsAverage: number;
+  reboundsAverage: number;
+  assistsAverage: number;
+}
+
+export interface PlayerMatchHistory {
+  matchId: number;
+  matchDate: string;
+  opponent: string;
+  local: boolean;
+  boxScore: BoxScore;
+}
+
+export interface AppConfig {
+  id: number;
+  key: string;
+  value: string;
+  type: string;
+  description?: string;
+}
+
+export interface Membership {
+  id: number;
+  user: UserResponse;
+  membershipType?: { id: number; name: string; price: number };
+  status: string;
+  memberNumber: string;
+  joinedAt?: string;
+  expiresAt?: string;
+  fullName?: string;
+}
+
+export interface AdminDashboardFull {
+  players: number;
+  matches: number;
+  menuItems: number;
+  menuCategories: number;
+  activeMembers: number;
+  pendingFees: number;
+  canteenOrdersToday: number;
+  products: number;
+}

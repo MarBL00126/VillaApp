@@ -1,10 +1,5 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+if (import.meta.env.MODE === 'mobile') {
+  void import('./mobile/bootstrap');
+} else {
+  void import('./web/bootstrap');
+}

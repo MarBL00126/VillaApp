@@ -1,9 +1,9 @@
 import api from './api';
 
 export const stadiumService = {
-  getInfo: () => api.get('/stadium').then(r => r.data),
-  getSectors: () => api.get('/stadium/sectors').then(r => r.data),
-  getServices: (type?: string) => api.get('/stadium/services', { params: type ? { type } : undefined }).then(r => r.data),
+  getInfo: () => api.get('/stadiums').then(r => r.data),
+  getSectors: () => api.get('/stadiums/sectors').then(r => r.data),
+  getServices: (type?: string) => api.get('/stadiums/services', { params: type ? { type } : undefined }).then(r => r.data),
 };
 
 export const accessService = {

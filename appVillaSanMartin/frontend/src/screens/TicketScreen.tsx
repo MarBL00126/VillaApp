@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
+import { theme } from "../theme";
 
 interface TicketType {
     id: number;
@@ -95,69 +96,160 @@ export default function TicketScreen() {
     };
 
     return (
-        <div>
-            <h1>Comprar entradas</h1>
+        <div style={styles.container}>
+            <h1 style={styles.title}>Comprar entradas</h1>
 
             {loaded && ticketTypes.length === 0 && (
-                <p>No hay entradas disponibles para este partido.</p>
+                <p style={styles.muted}>No hay entradas disponibles para este partido.</p>
             )}
 
-            {ticketTypes.map((ticketType) => (
-
-                <div
-                    key={ticketType.id}
-                    onClick={() =>
-                        setSelectedTicketType(ticketType)
-                    }
-                >
-
-                    <h2>{ticketType.name}</h2>
-
-                    <p>
-                        Precio: ${ticketType.price}
-                    </p>
-
-                    <p>
-                        Disponibles: {ticketType.availableQuantity}
-                    </p>
-
-                </div>
-            ))}
+            <div style={styles.list}>
+                {ticketTypes.map((ticketType) => {
+                    const selected = selectedTicketType?.id === ticketType.id;
+                    return (
+                        <div
+                            key={ticketType.id}
+                            style={{
+                                ...styles.card,
+                                ...(selected ? styles.cardSelected : {}),
+                            }}
+                            onClick={() => setSelectedTicketType(ticketType)}
+                        >
+                            <h2 style={styles.cardTitle}>{ticketType.name}</h2>
+                            <p style={styles.price}>${ticketType.price}</p>
+                            <p style={styles.muted}>
+                                Disponibles: {ticketType.availableQuantity}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
 
             {selectedTicketType && (
-                <div>
-
-                    <h3>
-                        Sector seleccionado:
-                        {" "}
-                        {selectedTicketType.name}
+                <div style={styles.form}>
+                    <h3 style={styles.formTitle}>
+                        Sector seleccionado: {selectedTicketType.name}
                     </h3>
 
-                    <label>
-                        Cantidad:
-                    </label>
-
-                    <input
-                        type="number"
-                        min="1"
-                        max={selectedTicketType.availableQuantity}
-                        value={quantity}
-                        onChange={(e) =>
-                            setQuantity(Number(e.target.value))
-                        }
-                    />
+                    <div style={styles.field}>
+                        <label style={styles.label} htmlFor="quantity">
+                            Cantidad
+                        </label>
+                        <input
+                            id="quantity"
+                            style={styles.input}
+                            type="number"
+                            min="1"
+                            max={selectedTicketType.availableQuantity}
+                            value={quantity}
+                            onChange={(e) => setQuantity(Number(e.target.value))}
+                        />
+                    </div>
 
                     <button
+                        style={{ ...styles.button, ...(loading ? styles.buttonDisabled : {}) }}
                         onClick={handleReserve}
                         disabled={loading}
                     >
-                        {loading
-                            ? "Procesando..."
-                            : "Reservar"}
+                        {loading ? "Procesando..." : "Reservar"}
                     </button>
-
                 </div>
             )}
         </div>
     );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+    container: {
+        maxWidth: '640px',
+        margin: '0 auto',
+        padding: '1rem',
+    },
+    title: {
+        color: theme.colors.primary,
+        fontSize: theme.fontSizes.xxl,
+        fontWeight: 700,
+        margin: '0 0 1rem',
+    },
+    list: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+    },
+    card: {
+        backgroundColor: theme.colors.surface,
+        border: `2px solid ${theme.colors.border}`,
+        borderRadius: theme.borderRadius.lg,
+        boxShadow: theme.shadows.card,
+        padding: '1rem',
+        cursor: 'pointer',
+    },
+    cardSelected: {
+        borderColor: theme.colors.secondary,
+    },
+    cardTitle: {
+        color: theme.colors.text,
+        fontSize: theme.fontSizes.lg,
+        fontWeight: 700,
+        margin: 0,
+    },
+    price: {
+        color: theme.colors.primary,
+        fontSize: theme.fontSizes.xl,
+        fontWeight: 700,
+        margin: '0.25rem 0',
+    },
+    muted: {
+        color: theme.colors.textMuted,
+        fontSize: theme.fontSizes.sm,
+        margin: 0,
+    },
+    form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.lg,
+        boxShadow: theme.shadows.card,
+        padding: '1.25rem',
+        marginTop: '1.25rem',
+    },
+    formTitle: {
+        color: theme.colors.primary,
+        fontSize: theme.fontSizes.lg,
+        fontWeight: 700,
+        margin: 0,
+    },
+    field: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.4rem',
+    },
+    label: {
+        fontSize: theme.fontSizes.sm,
+        fontWeight: 600,
+        color: theme.colors.text,
+    },
+    input: {
+        padding: '0.75rem 1rem',
+        borderRadius: theme.borderRadius.md,
+        border: `1px solid ${theme.colors.border}`,
+        fontSize: theme.fontSizes.md,
+        outline: 'none',
+        color: theme.colors.text,
+    },
+    button: {
+        backgroundColor: theme.colors.secondary,
+        color: theme.colors.primary,
+        fontWeight: 700,
+        fontSize: theme.fontSizes.md,
+        border: 'none',
+        borderRadius: theme.borderRadius.md,
+        padding: '0.875rem',
+        cursor: 'pointer',
+    },
+    buttonDisabled: {
+        opacity: 0.6,
+        cursor: 'not-allowed',
+    },
+};

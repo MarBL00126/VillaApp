@@ -9,6 +9,31 @@ interface State {
   hasError: boolean;
 }
 
+const RELOAD_KEY = 'chunk-reload-at';
+
+function isChunkLoadError(error: Error) {
+  return /dynamically imported module|Importing a module script failed|Loading chunk|Unable to preload CSS/i.test(
+    `${error.name} ${error.message}`,
+  );
+}
+
+// After a deploy, a cached index/service worker may reference chunks that no longer exist.
+// Drop the stale caches and reload once (guarded to avoid reload loops).
+async function recoverFromStaleBuild() {
+  const last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0);
+  if (Date.now() - last < 30_000) return;
+  sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  try {
+    const registrations = await navigator.serviceWorker?.getRegistrations();
+    await Promise.all((registrations ?? []).map((r) => r.unregister()));
+    const keys = await caches?.keys();
+    await Promise.all((keys ?? []).map((k) => caches.delete(k)));
+  } catch (e) {
+    console.error('Stale build cleanup failed:', e);
+  }
+  window.location.reload();
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
@@ -18,6 +43,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('UI error boundary:', error, info);
+    if (isChunkLoadError(error)) {
+      void recoverFromStaleBuild();
+    }
   }
 
   render() {

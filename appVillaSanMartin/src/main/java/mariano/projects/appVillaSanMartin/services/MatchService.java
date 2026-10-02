@@ -5,9 +5,10 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import mariano.projects.appVillaSanMartin.entities.MatchEntity;
+import mariano.projects.appVillaSanMartin.models.dto.MatchDto;
 import mariano.projects.appVillaSanMartin.repositories.MatchRepository;
 
 @Service
@@ -18,16 +19,23 @@ public class MatchService {
         this.matchRepository = matchRepository;
     }
 
-    public List<MatchEntity> getAll() {
-        return matchRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<MatchDto> getAll() {
+        return matchRepository.findAll().stream()
+                .map(MatchDto::from)
+                .toList();
     }
 
-    public MatchEntity getById(int id) {
-        return matchRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Match not found"));
+    @Transactional(readOnly = true)
+    public MatchDto getById(int id) {
+        return MatchDto.from(matchRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Match not found")));
     }
 
-    public List<MatchEntity> getFixture() {
-        return matchRepository.findByMatchDateAfterOrderByMatchDateAsc(LocalDateTime.now());
+    @Transactional(readOnly = true)
+    public List<MatchDto> getFixture() {
+        return matchRepository.findByMatchDateAfterOrderByMatchDateAsc(LocalDateTime.now()).stream()
+                .map(MatchDto::from)
+                .toList();
     }
 }

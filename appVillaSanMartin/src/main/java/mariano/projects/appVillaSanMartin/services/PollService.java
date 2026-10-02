@@ -1,15 +1,29 @@
 package mariano.projects.appVillaSanMartin.services;
 
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
+import mariano.projects.appVillaSanMartin.entities.PollEntity;
+import mariano.projects.appVillaSanMartin.entities.PollOptionEntity;
+import mariano.projects.appVillaSanMartin.entities.PollVoteEntity;
+import mariano.projects.appVillaSanMartin.models.dto.PollDetailDto;
+import mariano.projects.appVillaSanMartin.models.dto.PollDto;
+import mariano.projects.appVillaSanMartin.models.dto.PollOptionDto;
+import mariano.projects.appVillaSanMartin.models.dto.PollVoteDto;
+import mariano.projects.appVillaSanMartin.repositories.PollOptionRepository;
+import mariano.projects.appVillaSanMartin.repositories.PollRepository;
+import mariano.projects.appVillaSanMartin.repositories.PollVoteRepository;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,30 +34,40 @@ public class PollService {
     private final UserRepository userRepository;
     private final PointsService pointsService;
 
-    public List<PollEntity> getActive() {
-        return pollRepository.findByActiveTrueOrderByCreatedAtDesc();
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "polls-active")
+    public List<PollDto> getActive() {
+        return pollRepository.findByActiveTrueOrderByCreatedAtDesc().stream().map(PollDto::from).toList();
     }
 
-    public List<PollEntity> getMvpByMatch(int matchId) {
-        return pollRepository.findByTypeAndMatch_IdAndActiveTrueOrderByCreatedAtDesc("MVP_VOTE", matchId);
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "polls-mvp-by-match", key = "#matchId")
+    public List<PollDto> getMvpByMatch(int matchId) {
+        return pollRepository.findByTypeAndMatch_IdAndActiveTrueOrderByCreatedAtDesc("MVP_VOTE", matchId).stream()
+            .map(PollDto::from)
+            .toList();
     }
 
-    public Map<String, Object> getDetail(int pollId) {
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "poll-detail", key = "#pollId")
+    public PollDetailDto getDetail(int pollId) {
         PollEntity poll = pollRepository.findById(pollId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuesta no encontrada"));
-        List<Map<String, Object>> options = optionRepository.findByPollIdOrderBySortOrderAsc(pollId).stream()
-            .map(option -> Map.of(
-                "id", option.getId(),
-                "text", option.getText(),
-                "player", option.getPlayer(),
-                "votes", voteRepository.countByOption_Id(option.getId())
-            ))
+        List<PollOptionEntity> options = optionRepository.findByPollIdOrderBySortOrderAsc(pollId);
+        Map<Integer, Long> voteCounts = voteCountsByOptionId(options.stream().map(PollOptionEntity::getId).toList());
+        List<PollOptionDto> optionDtos = options.stream()
+            .map(option -> PollOptionDto.from(option, voteCounts.getOrDefault(option.getId(), 0L)))
             .toList();
-        return Map.of("poll", poll, "options", options);
+        return PollDetailDto.from(poll, optionDtos);
     }
 
     @Transactional
-    public PollVoteEntity vote(int userId, int pollId, int optionId) {
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "polls-active", allEntries = true),
+        @CacheEvict(cacheNames = "polls-mvp-by-match", allEntries = true),
+        @CacheEvict(cacheNames = "poll-detail", key = "#pollId")
+    })
+    public PollVoteDto vote(int userId, int pollId, int optionId) {
         PollEntity poll = pollRepository.findById(pollId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encuesta no encontrada"));
         PollOptionEntity option = optionRepository.findById(optionId)
@@ -60,6 +84,17 @@ public class PollService {
         if (vote.getCreatedAt() == null) vote.setCreatedAt(LocalDateTime.now());
         PollVoteEntity saved = voteRepository.save(vote);
         if (isNew) pointsService.award(userId, 5, "MVP_VOTE".equals(poll.getType()) ? "MVP_VOTE" : "POLL", saved.getId());
-        return saved;
+        return PollVoteDto.from(saved);
+    }
+
+    private Map<Integer, Long> voteCountsByOptionId(Collection<Integer> optionIds) {
+        if (optionIds == null || optionIds.isEmpty()) {
+            return Map.of();
+        }
+        return voteRepository.countByOptionIds(optionIds).stream()
+            .collect(Collectors.toMap(
+                row -> ((Number) row[0]).intValue(),
+                row -> ((Number) row[1]).longValue(),
+                (left, right) -> right));
     }
 }

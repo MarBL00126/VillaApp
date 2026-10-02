@@ -1,11 +1,19 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+
+import java.util.List;
+
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.FavoriteNewsDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.FavoriteNewsService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/favorites/news")
@@ -24,7 +32,7 @@ public class FavoriteNewsController {
     }
 
     @GetMapping({"", "/"})
-    public List<FavoriteNewsEntity> getFavorites(Authentication auth) {
+    public List<FavoriteNewsDto> getFavorites(Authentication auth) {
         return favService.getMyFavorites(getUser(auth).getId());
     }
 

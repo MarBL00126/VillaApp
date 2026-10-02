@@ -30,8 +30,6 @@ public class UserEntity {
     @Column(nullable = false, length = 255)
     @JsonIgnore
     private String password;
-    @Column
-    private int points;
     @Column(name = "phone_number", nullable = false, length = 50)
     private String phoneNumber;
 }

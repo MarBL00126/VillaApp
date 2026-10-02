@@ -1,12 +1,13 @@
 package mariano.projects.appVillaSanMartin.controllers;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
-import mariano.projects.appVillaSanMartin.entities.UserPreferencesEntity;
+import mariano.projects.appVillaSanMartin.models.dto.UserPreferencesDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.PreferencesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/preferences")
 @RequiredArgsConstructor
@@ -18,16 +19,34 @@ public class PreferencesController {
         return userRepository.findByEmail(userDetails.getUsername())
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
+
+    record UpdatePreferencesRequest(
+            Boolean notifyNews,
+            Boolean notifyVideos,
+            Boolean notifyFees,
+            Boolean notifyBenefits,
+            Boolean notifyMatchResults) {
+    }
+
     @GetMapping
-    public UserPreferencesEntity getMyPreferences(Authentication auth) {
-        return preferencesService.getMyPreferences(getUser(auth).getId());
+    public UserPreferencesDto getMyPreferences(Authentication auth) {
+        return preferencesService.getMyPreferencesDto(getUser(auth).getId());
     }
+
     @PutMapping
-    public UserPreferencesEntity updatePreferences(Authentication auth, @RequestBody UserPreferencesEntity body) {
-        return preferencesService.updatePreferences(getUser(auth).getId(), body);
+    public UserPreferencesDto updatePreferences(Authentication auth, @RequestBody UpdatePreferencesRequest body) {
+        return preferencesService.updatePreferencesDto(
+            getUser(auth).getId(),
+            body.notifyNews(),
+            body.notifyVideos(),
+            body.notifyFees(),
+            body.notifyBenefits(),
+            body.notifyMatchResults()
+        );
     }
+
     @PutMapping("/favorite-player/{playerId}")
-    public UserPreferencesEntity setFavoritePlayer(Authentication auth, @PathVariable int playerId) {
-        return preferencesService.setFavoritePlayer(getUser(auth).getId(), playerId);
+    public UserPreferencesDto setFavoritePlayer(Authentication auth, @PathVariable int playerId) {
+        return preferencesService.setFavoritePlayerDto(getUser(auth).getId(), playerId);
     }
 }

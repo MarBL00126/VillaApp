@@ -7,4 +7,5 @@ import java.util.List;
 public interface UserBadgeRepository extends JpaRepository<UserBadgeEntity, Integer> {
     List<UserBadgeEntity> findByUser_IdOrderByEarnedAtDesc(int userId);
     boolean existsByUser_IdAndBadge_Id(int userId, int badgeId);
+    List<UserBadgeEntity> findByUser_Id(int userId);
 }

@@ -1,6 +1,7 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.MatchPredictionDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.PredictionService;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,12 @@ public class PredictionController {
     }
 
     @GetMapping("/match/{matchId}")
-    public List<MatchPredictionEntity> getForMatch(@PathVariable int matchId) {
+    public List<MatchPredictionDto> getForMatch(@PathVariable int matchId) {
         return predictionService.getForMatch(matchId);
     }
 
     @PostMapping
-    public MatchPredictionEntity predict(@RequestBody Map<String, Integer> body, Authentication auth) {
+    public MatchPredictionDto predict(@RequestBody Map<String, Integer> body, Authentication auth) {
         return predictionService.predict(
             getUser(auth).getId(),
             body.get("matchId"),

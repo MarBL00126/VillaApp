@@ -12,7 +12,7 @@ import lombok.Data;
 @Table(name="press_access_logs")
 @Data 
 public class PressAccessLogEntity {
-     @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 

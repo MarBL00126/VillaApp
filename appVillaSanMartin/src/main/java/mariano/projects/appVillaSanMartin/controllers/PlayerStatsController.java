@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import mariano.projects.appVillaSanMartin.entities.PlayerStatsEntity;
+import mariano.projects.appVillaSanMartin.models.dto.PlayerStatsDto;
 import mariano.projects.appVillaSanMartin.models.responses.PlayerMatchHistoryResponse;
 import mariano.projects.appVillaSanMartin.models.responses.PlayerSeasonStatsResponse;
 import mariano.projects.appVillaSanMartin.models.responses.SeasonLeaderResponse;
@@ -24,12 +24,12 @@ public class PlayerStatsController {
     }
 
     @GetMapping
-    public List<PlayerStatsEntity> getAll() {
+    public List<PlayerStatsDto> getAll() {
         return playerStatsService.getAll();
     }
 
     @GetMapping("/player/{playerId}")
-    public PlayerStatsEntity getByPlayerId(@PathVariable int playerId) {
+    public PlayerStatsDto getByPlayerId(@PathVariable int playerId) {
         return playerStatsService.getByPlayerId(playerId);
     }
 

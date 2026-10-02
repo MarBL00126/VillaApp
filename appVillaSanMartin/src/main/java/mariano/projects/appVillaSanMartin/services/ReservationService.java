@@ -3,6 +3,7 @@ package mariano.projects.appVillaSanMartin.services;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import mariano.projects.appVillaSanMartin.entities.ReservationEntity;
 import mariano.projects.appVillaSanMartin.entities.ReservationStatus;
 import mariano.projects.appVillaSanMartin.entities.TicketTypeEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.ReservationDto;
 import mariano.projects.appVillaSanMartin.repositories.ReservationRepository;
 import mariano.projects.appVillaSanMartin.repositories.TicketTypeRepository;
 
@@ -29,7 +31,8 @@ public class ReservationService {
     }
 
     @Transactional
-    public ReservationEntity createReservation(
+    @CacheEvict(cacheNames = "ticket-types-by-match", allEntries = true)
+    public ReservationDto createReservation(
             UserEntity user,
             int ticketTypeId,
             int quantity) {
@@ -64,14 +67,18 @@ public class ReservationService {
         reservation.setExpiresAt(
                 LocalDateTime.now().plusMinutes(15));
 
-        return reservationRepository.save(reservation);
+        return ReservationDto.from(reservationRepository.save(reservation));
     }
 
-    public List<ReservationEntity> getByUserId(int userId) {
-        return reservationRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<ReservationDto> getByUserId(int userId) {
+        return reservationRepository.findByUserId(userId).stream()
+                .map(ReservationDto::from)
+                .toList();
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "ticket-types-by-match", allEntries = true)
     public void cancelReservation(int reservationId, int userId) {
 
         ReservationEntity reservation = reservationRepository
@@ -103,6 +110,7 @@ public class ReservationService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "ticket-types-by-match", allEntries = true)
     @Scheduled(fixedRate = 60000, initialDelay = 30000)
     public void expireReservations() {
 

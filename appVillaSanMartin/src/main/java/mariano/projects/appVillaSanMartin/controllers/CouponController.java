@@ -1,7 +1,8 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+import mariano.projects.appVillaSanMartin.models.dto.CouponDto;
+import mariano.projects.appVillaSanMartin.services.CouponService;
 import org.springframework.web.bind.annotation.*;
+
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class CouponController {
     }
 
     @PostMapping("/validate")
-    public CouponEntity validate(@RequestBody Map<String, Object> body) {
+    public CouponDto validate(@RequestBody Map<String, Object> body) {
         String code = (String) body.get("code");
         BigDecimal amount = new BigDecimal(body.get("amount").toString());
         return couponService.validate(code, amount);

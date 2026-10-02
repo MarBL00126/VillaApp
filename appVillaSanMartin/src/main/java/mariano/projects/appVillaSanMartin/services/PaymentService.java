@@ -2,6 +2,7 @@ package mariano.projects.appVillaSanMartin.services;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
@@ -26,6 +27,12 @@ public class PaymentService {
         private final PurchaseOrderRepository purchaseOrderRepository;
         private final PaymentRecordRepository paymentRecordRepository;
 
+        // CRÍTICO-4 FIX: URL base externalizada a variable de entorno (APP_BASE_URL).
+        // En application.yaml: app.base-url: ${APP_BASE_URL:http://localhost:8080}
+        // Esto evita URLs hardcodeadas a "tudominio.com" que rompen los pagos en producción.
+        @Value("${app.base-url}")
+        private String baseUrl;
+
         @Transactional
         public String createPreference(Long orderId) throws MPException, MPApiException {
                 PurchaseOrderEntity order = purchaseOrderRepository.findById(orderId.intValue())
@@ -40,17 +47,16 @@ public class PaymentService {
                                 .currencyId("ARS")
                                 .build();
                 PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                                .success("https://tudominio.com/payment/success?orderId=" + orderId)
-                                .failure("https://tudominio.com/payment/failure?orderId=" + orderId)
-                                .pending("https://tudominio.com/payment/pending?orderId=" + orderId)
+                                .success(baseUrl + "/payment/success?orderId=" + orderId)
+                                .failure(baseUrl + "/payment/failure?orderId=" + orderId)
+                                .pending(baseUrl + "/payment/pending?orderId=" + orderId)
                                 .build();
 
                 PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                                 .items(List.of(item))
                                 .externalReference(orderId.toString())
                                 .backUrls(backUrls)
-                                .notificationUrl(
-                                                "https://tudominio.com/webhooks/mercadopago")
+                                .notificationUrl(baseUrl + "/api/webhooks/mercadopago")
                                 .build();
                 PreferenceClient client = new PreferenceClient();
                 Preference preference = client.create(preferenceRequest);

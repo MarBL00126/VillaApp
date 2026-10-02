@@ -1,6 +1,7 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.CommentDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.CommunityService;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +24,17 @@ public class CommentController {
     }
 
     @GetMapping
-    public List<CommentEntity> getComments(@RequestParam String targetType, @RequestParam int targetId) {
+    public List<CommentDto> getComments(@RequestParam String targetType, @RequestParam int targetId) {
         return communityService.getComments(targetType, targetId);
     }
 
     @GetMapping("/fan-wall")
-    public List<CommentEntity> getFanWall() {
+    public List<CommentDto> getFanWall() {
         return communityService.getFanWall();
     }
 
     @PostMapping
-    public CommentEntity addComment(@RequestBody Map<String, Object> body, Authentication auth) {
+    public CommentDto addComment(@RequestBody Map<String, Object> body, Authentication auth) {
         return communityService.addComment(
             getUser(auth).getId(),
             String.valueOf(body.get("targetType")),

@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface BadgeRepository extends JpaRepository<BadgeEntity, Integer> {
     List<BadgeEntity> findByActiveTrueOrderByRequiredPointsAsc();
+    List<BadgeEntity> findByActiveTrueAndRequiredPointsLessThanEqualOrderByRequiredPointsAsc(int requiredPoints);
 }

@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import mariano.projects.appVillaSanMartin.entities.ReservationEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.ReservationDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.ReservationService;
 
@@ -42,7 +42,7 @@ public class ReservationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReservationEntity createReservation(
+    public ReservationDto createReservation(
             Authentication authentication,
             @RequestBody CreateReservationRequest request) {
 
@@ -55,7 +55,7 @@ public class ReservationController {
     }
 
     @GetMapping("/my")
-    public List<ReservationEntity> getMyReservations(
+    public List<ReservationDto> getMyReservations(
             Authentication authentication) {
 
         UserEntity user = getAuthenticatedUser(authentication);

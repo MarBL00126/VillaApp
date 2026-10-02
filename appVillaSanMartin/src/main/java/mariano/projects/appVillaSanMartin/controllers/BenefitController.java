@@ -1,34 +1,45 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.BenefitEntity;
-import mariano.projects.appVillaSanMartin.entities.UserEntity;
-import mariano.projects.appVillaSanMartin.repositories.UserRepository;
-import mariano.projects.appVillaSanMartin.services.BenefitService;
-import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.BenefitDto;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.BenefitService;
+
 @RestController
 @RequestMapping("/api/benefits")
 @RequiredArgsConstructor
 public class BenefitController {
     private final BenefitService benefitService;
     private final UserRepository userRepository;
+
     private UserEntity getUser(Authentication auth) {
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
         return userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
+
     @GetMapping
-    public List<BenefitEntity> getAll() {
+    public List<BenefitDto> getAll() {
         return benefitService.getAll();
     }
+
     @GetMapping("/my")
-    public List<BenefitEntity> getForMember(Authentication auth) {
+    public List<BenefitDto> getForMember(Authentication auth) {
         return benefitService.getForMember(getUser(auth).getId());
     }
+
     @GetMapping("/{id}")
-    public BenefitEntity getById(@PathVariable int id) {
+    public BenefitDto getById(@PathVariable int id) {
         return benefitService.getById(id);
     }
 }

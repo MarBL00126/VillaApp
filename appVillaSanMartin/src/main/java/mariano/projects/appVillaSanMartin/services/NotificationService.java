@@ -1,11 +1,13 @@
 package mariano.projects.appVillaSanMartin.services;
 import mariano.projects.appVillaSanMartin.entities.NotificationEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.NotificationDto;
 import mariano.projects.appVillaSanMartin.repositories.NotificationRepository;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,19 +16,31 @@ import java.util.List;
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    public List<NotificationEntity> getMyNotifications(int userId) {
-        return notificationRepository.findByUser_IdOrderByCreatedAtDesc(userId);
+
+    @Transactional(readOnly = true)
+    public List<NotificationDto> getMyNotifications(int userId) {
+        return notificationRepository.findByUser_IdOrderByCreatedAtDesc(userId).stream()
+            .map(NotificationDto::from)
+            .toList();
     }
-    public List<NotificationEntity> getUnread(int userId) {
-        return notificationRepository.findByUser_IdAndIsReadFalse(userId);
+
+    @Transactional(readOnly = true)
+    public List<NotificationDto> getUnread(int userId) {
+        return notificationRepository.findByUser_IdAndIsReadFalse(userId).stream()
+            .map(NotificationDto::from)
+            .toList();
     }
-    public NotificationEntity markRead(int notificationId, int userId) {
+
+    @Transactional
+    public NotificationDto markRead(int notificationId, int userId) {
         NotificationEntity n = notificationRepository.findById(notificationId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (n.getUser().getId() != userId) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         n.setIsRead(true);
-        return notificationRepository.save(n);
+        return NotificationDto.from(notificationRepository.save(n));
     }
+
+    @Transactional
     public void markAllRead(int userId) {
         List<NotificationEntity> unread = notificationRepository.findByUser_IdAndIsReadFalse(userId);
         unread.forEach(n -> n.setIsRead(true));
@@ -35,6 +49,8 @@ public class NotificationService {
     public long countUnread(int userId) {
         return notificationRepository.countByUser_IdAndIsReadFalse(userId);
     }
+
+    @Transactional
     public NotificationEntity createNotification(int userId, String type, String title, String message) {
         UserEntity user = userRepository.findById(userId).orElseThrow();
         NotificationEntity n = new NotificationEntity();

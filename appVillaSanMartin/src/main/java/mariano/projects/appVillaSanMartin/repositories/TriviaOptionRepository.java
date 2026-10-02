@@ -8,4 +8,5 @@ import java.util.List;
 public interface TriviaOptionRepository extends JpaRepository<TriviaOptionEntity, Integer> {
     List<TriviaOptionEntity> findByQuestionIdOrderByIdAsc(int questionId);
     List<TriviaOptionEntity> findByQuestionIdIn(Collection<Integer> questionIds);
+    List<TriviaOptionEntity> findByQuestionIdInOrderByQuestionIdAscIdAsc(Collection<Integer> questionIds);
 }

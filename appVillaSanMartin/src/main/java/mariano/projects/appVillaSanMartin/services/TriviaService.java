@@ -1,8 +1,22 @@
 package mariano.projects.appVillaSanMartin.services;
 
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
+import mariano.projects.appVillaSanMartin.entities.TriviaAttemptEntity;
+import mariano.projects.appVillaSanMartin.entities.TriviaEntity;
+import mariano.projects.appVillaSanMartin.entities.TriviaOptionEntity;
+import mariano.projects.appVillaSanMartin.entities.TriviaQuestionEntity;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaAttemptDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaDetailDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaOptionDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaQuestionDto;
+import mariano.projects.appVillaSanMartin.repositories.TriviaAttemptRepository;
+import mariano.projects.appVillaSanMartin.repositories.TriviaOptionRepository;
+import mariano.projects.appVillaSanMartin.repositories.TriviaQuestionRepository;
+import mariano.projects.appVillaSanMartin.repositories.TriviaRepository;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,31 +35,37 @@ public class TriviaService {
     private final UserRepository userRepository;
     private final PointsService pointsService;
 
-    public List<TriviaEntity> getActive() {
-        return triviaRepository.findByActiveTrueOrderByCreatedAtDesc();
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "trivia-active")
+    public List<TriviaDto> getActive() {
+        return triviaRepository.findByActiveTrueOrderByCreatedAtDesc().stream().map(TriviaDto::from).toList();
     }
 
-    public Map<String, Object> getDetail(int triviaId) {
+    @Transactional(readOnly = true)
+    public TriviaDetailDto getDetail(int triviaId) {
         TriviaEntity trivia = triviaRepository.findById(triviaId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trivia no encontrada"));
         List<TriviaQuestionEntity> questions = questionRepository.findByTriviaIdOrderBySortOrderAsc(triviaId);
-        List<Map<String, Object>> questionDtos = questions.stream().map(q -> Map.of(
-            "id", q.getId(),
-            "question", q.getQuestion(),
-            "sortOrder", q.getSortOrder(),
-            "options", optionRepository.findByQuestionIdOrderByIdAsc(q.getId()).stream()
-                .map(o -> Map.of("id", o.getId(), "text", o.getText()))
-                .toList()
-        )).toList();
-        return Map.of("trivia", trivia, "questions", questionDtos);
+        Map<Integer, List<TriviaOptionDto>> optionsByQuestion = optionRepository
+            .findByQuestionIdInOrderByQuestionIdAscIdAsc(questions.stream().map(TriviaQuestionEntity::getId).toList())
+            .stream()
+            .collect(Collectors.groupingBy(
+                TriviaOptionEntity::getQuestionId,
+                LinkedHashMap::new,
+                Collectors.mapping(TriviaOptionDto::from, Collectors.toList())));
+        List<TriviaQuestionDto> questionDtos = questions.stream()
+            .map(question -> TriviaQuestionDto.from(question, optionsByQuestion.getOrDefault(question.getId(), List.of())))
+            .toList();
+        return TriviaDetailDto.from(trivia, questionDtos);
     }
 
     @Transactional
-    public TriviaAttemptEntity submit(int userId, int triviaId, Collection<Integer> selectedOptionIds) {
+    @CacheEvict(cacheNames = "trivia-active", allEntries = true)
+    public TriviaAttemptDto submit(int userId, int triviaId, Collection<Integer> selectedOptionIds) {
         TriviaEntity trivia = triviaRepository.findById(triviaId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trivia no encontrada"));
         Optional<TriviaAttemptEntity> existing = attemptRepository.findByUser_IdAndTrivia_Id(userId, triviaId);
-        if (existing.isPresent()) return existing.get();
+        if (existing.isPresent()) return TriviaAttemptDto.from(existing.get());
 
         List<TriviaQuestionEntity> questions = questionRepository.findByTriviaIdOrderBySortOrderAsc(triviaId);
         Set<Integer> selected = selectedOptionIds == null ? Set.of() : new HashSet<>(selectedOptionIds);
@@ -70,6 +90,6 @@ public class TriviaService {
         attempt.setCompletedAt(LocalDateTime.now());
         TriviaAttemptEntity saved = attemptRepository.save(attempt);
         if (points > 0) pointsService.award(userId, points, "TRIVIA", saved.getId());
-        return saved;
+        return TriviaAttemptDto.from(saved);
     }
 }

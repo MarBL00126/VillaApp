@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import mariano.projects.appVillaSanMartin.entities.MatchEntity;
-import mariano.projects.appVillaSanMartin.entities.TicketTypeEntity;
+import mariano.projects.appVillaSanMartin.models.dto.MatchDto;
+import mariano.projects.appVillaSanMartin.models.dto.TicketTypeDto;
 import mariano.projects.appVillaSanMartin.services.MatchService;
 import mariano.projects.appVillaSanMartin.services.TicketTypeService;
 
@@ -24,22 +24,22 @@ public class MatchController {
     }
 
     @GetMapping("/matches/{id}/ticket-types")
-    public List<TicketTypeEntity> getAllTicketTypes(@PathVariable int id) {
+    public List<TicketTypeDto> getAllTicketTypes(@PathVariable int id) {
         return ticketTypeService.getByMatchId(id);
     }
 
     @GetMapping("/matches")
-    public List<MatchEntity> getAll() {
+    public List<MatchDto> getAll() {
         return matchService.getAll();
     }
 
     @GetMapping("/matches/{id}")
-    public MatchEntity getById(@PathVariable int id) {
+    public MatchDto getById(@PathVariable int id) {
         return matchService.getById(id);
     }
 
     @GetMapping("/fixture")
-    public List<MatchEntity> getFixture() {
+    public List<MatchDto> getFixture() {
         return matchService.getFixture();
     }
 }

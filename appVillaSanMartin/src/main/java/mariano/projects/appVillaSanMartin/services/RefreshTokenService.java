@@ -63,10 +63,7 @@ public class RefreshTokenService {
     public void revokeAllForUser(Integer userId){
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        refreshTokenRepository.findByUser_IdAndRevokedFalse(user.getId()).forEach(token -> {
-            token.setRevoked(true);
-            refreshTokenRepository.save(token);
-        });
+        refreshTokenRepository.revokeAllByUserId(user.getId());
     }
     public boolean isValid(String refreshToken) {
         return refreshTokenRepository.existsByTokenAndRevokedFalseAndExpiresAtAfter(

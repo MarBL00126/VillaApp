@@ -10,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import mariano.projects.appVillaSanMartin.entities.BoxScoreEntity;
-import mariano.projects.appVillaSanMartin.entities.PlayerStatsEntity;
+import mariano.projects.appVillaSanMartin.models.dto.PlayerStatsDto;
 import mariano.projects.appVillaSanMartin.models.responses.PlayerMatchHistoryResponse;
 import mariano.projects.appVillaSanMartin.models.responses.PlayerSeasonStatsResponse;
 import mariano.projects.appVillaSanMartin.models.responses.SeasonLeaderResponse;
@@ -37,12 +39,19 @@ public class PlayerStatsService {
         this.boxScoreService = boxScoreService;
     }
 
-    public List<PlayerStatsEntity> getAll() {
-        return playerStatsRepository.findAll();
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "player-stats-all")
+    public List<PlayerStatsDto> getAll() {
+        return playerStatsRepository.findAll().stream()
+                .map(PlayerStatsDto::from)
+                .toList();
     }
 
-    public PlayerStatsEntity getByPlayerId(int playerId) {
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "player-stats-by-player", key = "#playerId")
+    public PlayerStatsDto getByPlayerId(int playerId) {
         return playerStatsRepository.findByPlayer_Id(playerId)
+                .map(PlayerStatsDto::from)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stats not found for player"));
     }
 

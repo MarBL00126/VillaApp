@@ -9,6 +9,7 @@ import mariano.projects.appVillaSanMartin.entities.PurchaseOrderEntity;
 import mariano.projects.appVillaSanMartin.entities.PurchaseOrderStatus;
 import mariano.projects.appVillaSanMartin.entities.ReservationEntity;
 import mariano.projects.appVillaSanMartin.entities.ReservationStatus;
+import mariano.projects.appVillaSanMartin.models.dto.PurchaseOrderDto;
 import mariano.projects.appVillaSanMartin.models.responses.QrValidationResponse;
 import mariano.projects.appVillaSanMartin.repositories.PurchaseOrderRepository;
 
@@ -81,7 +82,7 @@ public class PurchaseOrderService {
     }
 
     @Transactional
-    public PurchaseOrderEntity createOrder(int userId, int reservationId) {
+    public PurchaseOrderDto createOrder(int userId, int reservationId) {
 
         ReservationEntity reservation = reservationRepository
                 .findById(reservationId)
@@ -112,14 +113,14 @@ public class PurchaseOrderService {
         order.setTotalAmount(totalAmount);
         order.setStatus(PurchaseOrderStatus.PENDING_PAYMENT);
 
-        return purchaseOrderRepository.save(order);
+        return PurchaseOrderDto.from(purchaseOrderRepository.save(order));
     }
 
     @Transactional
     public PurchaseOrderEntity confirmPaymentFromWebhook(int orderId) {
 
         PurchaseOrderEntity order = purchaseOrderRepository
-                .findById(orderId)
+                .findByIdForUpdate(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
         // Webhooks duplicados: no volver a generar QR
@@ -134,27 +135,8 @@ public class PurchaseOrderService {
         return processPaymentConfirmation(order);
     }
 
-    @Transactional
-    public PurchaseOrderEntity confirmPayment(int orderId, int userId) {
-
-        PurchaseOrderEntity order = purchaseOrderRepository
-                .findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
-
-        if (order.getUser().getId() != userId) {
-            throw new RuntimeException("La orden no pertenece al usuario");
-        }
-
-        if (order.getStatus() != PurchaseOrderStatus.PENDING_PAYMENT) {
-            throw new RuntimeException(
-                    "La orden no está pendiente de pago");
-        }
-
-        return processPaymentConfirmation(order);
-    }
-
     @Transactional(readOnly = true)
-    public PurchaseOrderEntity getOrderById(int id, int userId) {
+    public PurchaseOrderDto getOrderById(int id, int userId) {
         PurchaseOrderEntity order = purchaseOrderRepository
                 .findById(id)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
@@ -163,12 +145,19 @@ public class PurchaseOrderService {
             throw new RuntimeException("La orden no pertenece al usuario");
         }
 
-        return order;
+        return PurchaseOrderDto.from(order);
     }
 
     @Transactional(readOnly = true)
-    public List<PurchaseOrderEntity> getMyOrders(Long userId) {
-        return purchaseOrderRepository.findByUserId(userId);
+    public List<PurchaseOrderDto> getMyOrders(Long userId) {
+        return purchaseOrderRepository.findByUserId(userId).stream()
+                .map(PurchaseOrderDto::from)
+                .toList();
+    }
+
+    @Transactional
+    public PurchaseOrderDto confirmPaymentResponse(int orderId) {
+        return PurchaseOrderDto.from(confirmPaymentFromWebhook(orderId));
     }
 
     @Transactional

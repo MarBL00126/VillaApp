@@ -78,6 +78,7 @@ import mariano.projects.appVillaSanMartin.entities.UserBadgeEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
 import mariano.projects.appVillaSanMartin.entities.UserPreferencesEntity;
 import mariano.projects.appVillaSanMartin.entities.VideoEntity;
+import mariano.projects.appVillaSanMartin.services.CacheMaintenanceService;
 
 @RestController
 @RequestMapping("/api/admin/resources")
@@ -86,11 +87,14 @@ public class AdminResourceController {
     private final Repositories repositories;
     private final ObjectMapper objectMapper;
     private final EntityManager entityManager;
+    private final CacheMaintenanceService cacheMaintenance;
 
-    public AdminResourceController(ApplicationContext applicationContext, ObjectMapper objectMapper, EntityManager entityManager) {
+    public AdminResourceController(ApplicationContext applicationContext, ObjectMapper objectMapper, EntityManager entityManager,
+            CacheMaintenanceService cacheMaintenance) {
         this.repositories = new Repositories(applicationContext);
         this.objectMapper = objectMapper;
         this.entityManager = entityManager;
+        this.cacheMaintenance = cacheMaintenance;
         this.resources = buildResources();
     }
 
@@ -127,6 +131,7 @@ public class AdminResourceController {
         }
         Object saved = repositoryFor(resource).save(entity);
         entityManager.flush();
+        cacheMaintenance.evictAll();
         return saved;
     }
 
@@ -142,6 +147,7 @@ public class AdminResourceController {
         }
         Object saved = repositoryFor(resource).save(entity);
         entityManager.flush();
+        cacheMaintenance.evictAll();
         return saved;
     }
 
@@ -153,6 +159,7 @@ public class AdminResourceController {
             throw notFound(resource);
         }
         repository.deleteById(id);
+        cacheMaintenance.evictAll();
     }
 
     private ResourceDefinition definition(String resource) {

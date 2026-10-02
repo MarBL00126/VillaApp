@@ -1,16 +1,36 @@
 package mariano.projects.appVillaSanMartin.services;
-import mariano.projects.appVillaSanMartin.entities.VideoEntity;
-import mariano.projects.appVillaSanMartin.repositories.VideoRepository;
+
 import lombok.RequiredArgsConstructor;
+import mariano.projects.appVillaSanMartin.models.dto.VideoDto;
+import mariano.projects.appVillaSanMartin.repositories.VideoRepository;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class VideoService {
     private final VideoRepository videoRepo;
-    public List<VideoEntity> getAll() { return videoRepo.findAllByOrderByPublishedAtDesc(); }
-    public List<VideoEntity> getByType(String type) { return videoRepo.findByTypeOrderByPublishedAtDesc(type); }
-    public VideoEntity getById(int id) { return videoRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)); }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "videos-page")
+    public Page<VideoDto> getAll(Pageable pageable) {
+        return videoRepo.findAllByOrderByPublishedAtDesc(pageable).map(VideoDto::from);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "videos-by-type-page", key = "#type + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    public Page<VideoDto> getByType(String type, Pageable pageable) {
+        return videoRepo.findByTypeOrderByPublishedAtDesc(type, pageable).map(VideoDto::from);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "video-detail", key = "#id")
+    public VideoDto getById(int id) {
+        return VideoDto.from(videoRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+    }
 }

@@ -1,7 +1,12 @@
 package mariano.projects.appVillaSanMartin.services;
 
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
+import mariano.projects.appVillaSanMartin.entities.MatchEntity;
+import mariano.projects.appVillaSanMartin.entities.MatchPredictionEntity;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.MatchPredictionDto;
+import mariano.projects.appVillaSanMartin.repositories.MatchPredictionRepository;
+import mariano.projects.appVillaSanMartin.repositories.MatchRepository;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,12 +23,15 @@ public class PredictionService {
     private final UserRepository userRepository;
     private final PointsService pointsService;
 
-    public List<MatchPredictionEntity> getForMatch(int matchId) {
-        return predictionRepository.findByMatch_IdOrderByCreatedAtDesc(matchId);
+    @Transactional(readOnly = true)
+    public List<MatchPredictionDto> getForMatch(int matchId) {
+        return predictionRepository.findByMatch_IdOrderByCreatedAtDesc(matchId).stream()
+            .map(MatchPredictionDto::from)
+            .toList();
     }
 
     @Transactional
-    public MatchPredictionEntity predict(int userId, int matchId, int homeScore, int awayScore) {
+    public MatchPredictionDto predict(int userId, int matchId, int homeScore, int awayScore) {
         UserEntity user = userRepository.findById(userId).orElseThrow();
         MatchEntity match = matchRepository.findById(matchId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
@@ -43,6 +51,6 @@ public class PredictionService {
         if (isNew) {
             pointsService.award(userId, 10, "PREDICTION", saved.getId());
         }
-        return saved;
+        return MatchPredictionDto.from(saved);
     }
 }

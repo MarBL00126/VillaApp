@@ -1,13 +1,33 @@
 package mariano.projects.appVillaSanMartin.services;
-import mariano.projects.appVillaSanMartin.entities.StaffEntity;
-import mariano.projects.appVillaSanMartin.repositories.StaffRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+
 import java.util.List;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import mariano.projects.appVillaSanMartin.models.dto.StaffDto;
+import mariano.projects.appVillaSanMartin.repositories.StaffRepository;
+
 @Service
 @RequiredArgsConstructor
 public class StaffService {
     private final StaffRepository staffRepository;
-    public List<StaffEntity> getAll() { return staffRepository.findByActiveTrue(); }
-    public List<StaffEntity> getByTeam(int teamId) { return staffRepository.findByTeam_IdAndActiveTrue(teamId); }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "staff-all")
+    public List<StaffDto> getAll() {
+        return staffRepository.findByActiveTrue().stream()
+                .map(StaffDto::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "staff-by-team", key = "#teamId")
+    public List<StaffDto> getByTeam(int teamId) {
+        return staffRepository.findByTeam_IdAndActiveTrue(teamId).stream()
+                .map(StaffDto::from)
+                .toList();
+    }
 }

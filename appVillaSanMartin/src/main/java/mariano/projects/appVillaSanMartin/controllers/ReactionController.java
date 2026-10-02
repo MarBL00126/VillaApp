@@ -1,6 +1,7 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.ReactionDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.CommunityService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class ReactionController {
     }
 
     @PostMapping
-    public ReactionEntity react(@RequestBody Map<String, Object> body, Authentication auth) {
+    public ReactionDto react(@RequestBody Map<String, Object> body, Authentication auth) {
         return communityService.react(
             getUser(auth).getId(),
             String.valueOf(body.get("targetType")),

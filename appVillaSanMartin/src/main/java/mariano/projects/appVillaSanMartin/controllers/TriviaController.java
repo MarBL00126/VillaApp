@@ -1,6 +1,9 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaAttemptDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaDetailDto;
+import mariano.projects.appVillaSanMartin.models.dto.TriviaDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.TriviaService;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +27,17 @@ public class TriviaController {
     }
 
     @GetMapping
-    public List<TriviaEntity> getActive() {
+    public List<TriviaDto> getActive() {
         return triviaService.getActive();
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getDetail(@PathVariable int id) {
+    public TriviaDetailDto getDetail(@PathVariable int id) {
         return triviaService.getDetail(id);
     }
 
     @PostMapping("/{id}/submit")
-    public TriviaAttemptEntity submit(@PathVariable int id, @RequestBody Map<String, Collection<Integer>> body, Authentication auth) {
+    public TriviaAttemptDto submit(@PathVariable int id, @RequestBody Map<String, Collection<Integer>> body, Authentication auth) {
         return triviaService.submit(getUser(auth).getId(), id, body.get("selectedOptionIds"));
     }
 }

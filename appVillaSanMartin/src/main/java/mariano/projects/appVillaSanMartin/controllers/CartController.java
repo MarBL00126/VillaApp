@@ -1,10 +1,13 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.CartDto;
+import mariano.projects.appVillaSanMartin.models.dto.CartItemDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.CartService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Map;
 
 @RestController
@@ -24,19 +27,19 @@ public class CartController {
     }
 
     @GetMapping({"", "/"})
-    public CartEntity getCart(Authentication auth) { return cartService.getCart(getUser(auth).getId()); }
+    public CartDto getCart(Authentication auth) { return cartService.getCartDto(getUser(auth).getId()); }
 
     @PostMapping("/items")
-    public CartItemEntity addItem(@RequestBody Map<String, Object> body, Authentication auth) {
+    public CartItemDto addItem(@RequestBody Map<String, Object> body, Authentication auth) {
         int productId = (int) body.get("productId");
         Integer variantId = body.get("variantId") != null ? (Integer) body.get("variantId") : null;
         int quantity = body.get("quantity") != null ? (int) body.get("quantity") : 1;
-        return cartService.addItem(getUser(auth).getId(), productId, variantId, quantity);
+        return cartService.addItemDto(getUser(auth).getId(), productId, variantId, quantity);
     }
 
     @PutMapping("/items/{itemId}")
-    public CartItemEntity updateItem(@PathVariable int itemId, @RequestBody Map<String, Integer> body, Authentication auth) {
-        return cartService.updateItem(itemId, getUser(auth).getId(), body.get("quantity"));
+    public CartItemDto updateItem(@PathVariable int itemId, @RequestBody Map<String, Integer> body, Authentication auth) {
+        return cartService.updateItemDto(itemId, getUser(auth).getId(), body.get("quantity"));
     }
 
     @DeleteMapping("/items/{itemId}")

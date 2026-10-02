@@ -1,10 +1,16 @@
 package mariano.projects.appVillaSanMartin.services;
 
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
+import mariano.projects.appVillaSanMartin.entities.CommentEntity;
+import mariano.projects.appVillaSanMartin.entities.ReactionEntity;
+import mariano.projects.appVillaSanMartin.models.dto.CommentDto;
+import mariano.projects.appVillaSanMartin.models.dto.ReactionDto;
+import mariano.projects.appVillaSanMartin.repositories.CommentRepository;
+import mariano.projects.appVillaSanMartin.repositories.ReactionRepository;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,15 +23,22 @@ public class CommunityService {
     private final ReactionRepository reactionRepository;
     private final UserRepository userRepository;
 
-    public List<CommentEntity> getComments(String targetType, int targetId) {
-        return commentRepository.findByTargetTypeAndTargetIdOrderByCreatedAtAsc(targetType, targetId);
+    @Transactional(readOnly = true)
+    public List<CommentDto> getComments(String targetType, int targetId) {
+        return commentRepository.findByTargetTypeAndTargetIdOrderByCreatedAtAsc(targetType, targetId).stream()
+            .map(CommentDto::from)
+            .toList();
     }
 
-    public List<CommentEntity> getFanWall() {
-        return commentRepository.findTop50ByOrderByCreatedAtDesc();
+    @Transactional(readOnly = true)
+    public List<CommentDto> getFanWall() {
+        return commentRepository.findTop50ByOrderByCreatedAtDesc().stream()
+            .map(CommentDto::from)
+            .toList();
     }
 
-    public CommentEntity addComment(int userId, String targetType, int targetId, String content) {
+    @Transactional
+    public CommentDto addComment(int userId, String targetType, int targetId, String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El comentario no puede estar vacio");
         }
@@ -35,9 +48,10 @@ public class CommunityService {
         comment.setTargetId(targetId);
         comment.setContent(content.trim());
         comment.setCreatedAt(LocalDateTime.now());
-        return commentRepository.save(comment);
+        return CommentDto.from(commentRepository.save(comment));
     }
 
+    @Transactional
     public void deleteComment(int userId, int commentId) {
         CommentEntity comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -47,8 +61,9 @@ public class CommunityService {
         commentRepository.delete(comment);
     }
 
-    public ReactionEntity react(int userId, String targetType, int targetId, String type) {
-        return reactionRepository.findByUser_IdAndTargetTypeAndTargetIdAndType(userId, targetType, targetId, type)
+    @Transactional
+    public ReactionDto react(int userId, String targetType, int targetId, String type) {
+        return ReactionDto.from(reactionRepository.findByUser_IdAndTargetTypeAndTargetIdAndType(userId, targetType, targetId, type)
             .orElseGet(() -> {
                 ReactionEntity reaction = new ReactionEntity();
                 reaction.setUser(userRepository.findById(userId).orElseThrow());
@@ -57,7 +72,7 @@ public class CommunityService {
                 reaction.setType(type);
                 reaction.setCreatedAt(LocalDateTime.now());
                 return reactionRepository.save(reaction);
-            });
+            }));
     }
 
     public Map<String, Long> getReactionCounts(String targetType, int targetId) {

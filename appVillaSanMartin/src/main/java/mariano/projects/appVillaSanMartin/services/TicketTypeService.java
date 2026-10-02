@@ -2,9 +2,11 @@ package mariano.projects.appVillaSanMartin.services;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import mariano.projects.appVillaSanMartin.entities.TicketTypeEntity;
+import mariano.projects.appVillaSanMartin.models.dto.TicketTypeDto;
 import mariano.projects.appVillaSanMartin.repositories.TicketTypeRepository;
 
 @Service
@@ -15,7 +17,11 @@ public class TicketTypeService {
         this.ticketTypeRepository = ticketTypeRepository;
     }
 
-    public List<TicketTypeEntity> getByMatchId(int matchId) {
-        return ticketTypeRepository.findByMatchId(matchId);
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "ticket-types-by-match", key = "#matchId")
+    public List<TicketTypeDto> getByMatchId(int matchId) {
+        return ticketTypeRepository.findByMatchId(matchId).stream()
+                .map(TicketTypeDto::from)
+                .toList();
     }
 }

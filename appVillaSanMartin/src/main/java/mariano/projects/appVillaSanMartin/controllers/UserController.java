@@ -54,9 +54,6 @@ public class UserController {
 
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-        if (user == null) {
-            throw new IllegalStateException("Usuario autenticado no encontrado");
-        }
         UserResponse response = new UserResponse(
                 user.getId(),
                 user.getName(),

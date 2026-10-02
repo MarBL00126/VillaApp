@@ -1,7 +1,11 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+
+import mariano.projects.appVillaSanMartin.models.dto.CanteenInfoDto;
+import mariano.projects.appVillaSanMartin.models.dto.CanteenMenuCategoryDto;
+import mariano.projects.appVillaSanMartin.models.dto.CanteenMenuItemDto;
+import mariano.projects.appVillaSanMartin.services.CanteenService;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,16 +19,16 @@ public class CanteenController {
     }
 
     @GetMapping("/info")
-    public CanteenInfoEntity getInfo() { return cantinaService.getInfo(); }
+    public CanteenInfoDto getInfo() { return cantinaService.getInfo(); }
 
     @GetMapping("/menu")
-    public List<CanteenMenuItemEntity> getMenu() { return cantinaService.getMenu(); }
+    public List<CanteenMenuItemDto> getMenu() { return cantinaService.getMenu(); }
 
     @GetMapping("/menu/categories")
-    public Map<String, List<CanteenMenuItemEntity>> getMenuByCategory() { return cantinaService.getMenuByCategory(); }
+    public Map<String, List<CanteenMenuItemDto>> getMenuByCategory() { return cantinaService.getMenuByCategory(); }
 
     @GetMapping("/categories")
-    public List<CanteenMenuCategoryEntity> getCategories() { return cantinaService.getCategories(); }
+    public List<CanteenMenuCategoryDto> getCategories() { return cantinaService.getCategories(); }
 
     @PatchMapping("/info/status")
     public void updateStatus(@RequestBody Map<String, Boolean> body) {

@@ -44,15 +44,58 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirige al login si el token expiró
+function clearSession() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+}
+
+// Una sola renovaci?n a la vez: los requests que fallan juntos esperan el mismo refresh.
+let refreshPromise: Promise<string> | null = null;
+
+function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    refreshPromise = axios
+      .post<{ token: string; refreshToken: string }>(`${getApiBaseUrl()}/auth/refresh`, { refreshToken })
+      .then(({ data }) => {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        return data.token;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+function isAuthRequest(url?: string) {
+  return !!url && (url.startsWith('/users/login') || url.startsWith('/users/register') || url.startsWith('/auth/'));
+}
+
+// Ante un 401 intenta renovar el JWT con el refresh token y reintenta el request; si no se puede, va al login.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  async (error) => {
+    const original = error.config;
+    if (error.response?.status !== 401) {
+      return Promise.reject(error);
     }
+
+    if (original && !original._retry && !isAuthRequest(original.url) && localStorage.getItem('refreshToken')) {
+      original._retry = true;
+      try {
+        const token = await refreshAccessToken();
+        original.headers.Authorization = `Bearer ${token}`;
+        return api(original);
+      } catch {
+        // el refresh token venci? o fue revocado: se cierra la sesi?n abajo
+      }
+    }
+
+    clearSession();
+    window.location.href = '/login';
     return Promise.reject(error);
   }
 );

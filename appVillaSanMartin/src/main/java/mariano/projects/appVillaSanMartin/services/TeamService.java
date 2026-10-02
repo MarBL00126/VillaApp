@@ -2,11 +2,14 @@ package mariano.projects.appVillaSanMartin.services;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import mariano.projects.appVillaSanMartin.entities.TeamEntity;
+import mariano.projects.appVillaSanMartin.models.dto.ClubInfoDto;
+import mariano.projects.appVillaSanMartin.models.dto.TeamDto;
 import mariano.projects.appVillaSanMartin.repositories.TeamRepository;
 
 @Service
@@ -17,19 +20,28 @@ public class TeamService {
         this.teamRepository = teamRepository;
     }
 
-    public List<TeamEntity> getAll() {
-        return teamRepository.findAll();
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "teams-all")
+    public List<TeamDto> getAll() {
+        return teamRepository.findAll().stream()
+                .map(TeamDto::from)
+                .toList();
     }
 
-    public TeamEntity getById(int id) {
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "team-by-id", key = "#id")
+    public TeamDto getById(int id) {
         return teamRepository.findById(id)
+                .map(TeamDto::from)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found"));
     }
 
-    public TeamEntity getPrimaryTeam() {
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "club-info")
+    public ClubInfoDto getClubInfo() {
         return teamRepository.findByPrimaryTeamTrue()
-                .orElseGet(() -> teamRepository.findAll().stream()
-                        .findFirst()
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found")));
+                .or(() -> teamRepository.findAll().stream().findFirst())
+                .map(ClubInfoDto::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found"));
     }
 }

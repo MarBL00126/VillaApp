@@ -1,19 +1,25 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.BadgeDto;
+import mariano.projects.appVillaSanMartin.models.dto.UserBadgeDto;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.BadgeService;
 
 @RestController
 @RequestMapping("/api/badges")
 @RequiredArgsConstructor
 public class BadgeController {
-    private final BadgeRepository badgeRepository;
-    private final UserBadgeRepository userBadgeRepository;
+    private final BadgeService badgeService;
     private final UserRepository userRepository;
 
     private UserEntity getUser(Authentication auth) {
@@ -22,12 +28,12 @@ public class BadgeController {
     }
 
     @GetMapping
-    public List<BadgeEntity> getAll() {
-        return badgeRepository.findByActiveTrueOrderByRequiredPointsAsc();
+    public List<BadgeDto> getAll() {
+        return badgeService.getAll();
     }
 
     @GetMapping("/my")
-    public List<UserBadgeEntity> getMyBadges(Authentication auth) {
-        return userBadgeRepository.findByUser_IdOrderByEarnedAtDesc(getUser(auth).getId());
+    public List<UserBadgeDto> getMyBadges(Authentication auth) {
+        return badgeService.getMyBadges(getUser(auth).getId());
     }
 }

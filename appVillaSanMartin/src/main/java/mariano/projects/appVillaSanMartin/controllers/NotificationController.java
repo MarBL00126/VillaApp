@@ -1,6 +1,6 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.NotificationEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.NotificationDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class NotificationController {
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
     @GetMapping
-    public List<NotificationEntity> getMyNotifications(Authentication auth) {
+    public List<NotificationDto> getMyNotifications(Authentication auth) {
         return notificationService.getMyNotifications(getUser(auth).getId());
     }
     @GetMapping("/unread-count")
@@ -29,7 +29,7 @@ public class NotificationController {
         return Map.of("count", notificationService.countUnread(getUser(auth).getId()));
     }
     @PatchMapping("/{id}/read")
-    public NotificationEntity markRead(@PathVariable int id, Authentication auth) {
+    public NotificationDto markRead(@PathVariable int id, Authentication auth) {
         return notificationService.markRead(id, getUser(auth).getId());
     }
     @PatchMapping("/read-all")

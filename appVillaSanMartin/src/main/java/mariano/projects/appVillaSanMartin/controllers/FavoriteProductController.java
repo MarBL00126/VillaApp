@@ -1,10 +1,12 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.FavoriteProductDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.FavoriteProductService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -24,7 +26,7 @@ public class FavoriteProductController {
     }
 
     @GetMapping({"", "/"})
-    public List<FavoriteProductEntity> getFavorites(Authentication auth) {
+    public List<FavoriteProductDto> getFavorites(Authentication auth) {
         return favService.getMyFavorites(getUser(auth).getId());
     }
 

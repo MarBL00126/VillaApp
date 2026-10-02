@@ -1,8 +1,16 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
-import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+
+import mariano.projects.appVillaSanMartin.models.dto.PageResponses;
+import mariano.projects.appVillaSanMartin.models.dto.VideoDto;
+import mariano.projects.appVillaSanMartin.services.VideoService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/videos")
@@ -14,11 +22,18 @@ public class VideoController {
     }
 
     @GetMapping({"", "/"})
-    public List<VideoEntity> getAll() { return videoService.getAll(); }
+    public ResponseEntity<List<VideoDto>> getAll(@RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "20") int size) {
+        return PageResponses.of(videoService.getAll(PageResponses.pageable(page, size)));
+    }
 
     @GetMapping("/{id}")
-    public VideoEntity getById(@PathVariable int id) { return videoService.getById(id); }
+    public VideoDto getById(@PathVariable int id) { return videoService.getById(id); }
 
     @GetMapping("/type/{type}")
-    public List<VideoEntity> getByType(@PathVariable String type) { return videoService.getByType(type); }
+    public ResponseEntity<List<VideoDto>> getByType(@PathVariable String type,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "20") int size) {
+        return PageResponses.of(videoService.getByType(type, PageResponses.pageable(page, size)));
+    }
 }

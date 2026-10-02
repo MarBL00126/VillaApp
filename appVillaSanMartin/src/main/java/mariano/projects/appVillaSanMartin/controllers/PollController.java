@@ -1,6 +1,9 @@
 package mariano.projects.appVillaSanMartin.controllers;
 
-import mariano.projects.appVillaSanMartin.entities.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.PollDetailDto;
+import mariano.projects.appVillaSanMartin.models.dto.PollDto;
+import mariano.projects.appVillaSanMartin.models.dto.PollVoteDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import mariano.projects.appVillaSanMartin.services.PollService;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +26,17 @@ public class PollController {
     }
 
     @GetMapping
-    public List<PollEntity> getActive() {
+    public List<PollDto> getActive() {
         return pollService.getActive();
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getDetail(@PathVariable int id) {
+    public PollDetailDto getDetail(@PathVariable int id) {
         return pollService.getDetail(id);
     }
 
     @PostMapping("/{id}/vote")
-    public PollVoteEntity vote(@PathVariable int id, @RequestBody Map<String, Integer> body, Authentication auth) {
+    public PollVoteDto vote(@PathVariable int id, @RequestBody Map<String, Integer> body, Authentication auth) {
         return pollService.vote(getUser(auth).getId(), id, body.get("optionId"));
     }
 }

@@ -2,10 +2,13 @@ package mariano.projects.appVillaSanMartin.services;
 import mariano.projects.appVillaSanMartin.entities.PlayerEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
 import mariano.projects.appVillaSanMartin.entities.UserPreferencesEntity;
+import mariano.projects.appVillaSanMartin.models.dto.UserPreferencesDto;
 import mariano.projects.appVillaSanMartin.repositories.PlayerRepository;
 import mariano.projects.appVillaSanMartin.repositories.UserPreferencesRepository;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ public class PreferencesService {
     private final UserPreferencesRepository prefsRepository;
     private final UserRepository userRepository;
     private final PlayerRepository playerRepository;
+
     public UserPreferencesEntity getMyPreferences(int userId) {
         return prefsRepository.findByUser_Id(userId).orElseGet(() -> {
             UserEntity user = userRepository.findById(userId).orElseThrow();
@@ -26,6 +30,7 @@ public class PreferencesService {
             return prefsRepository.save(prefs);
         });
     }
+
     public UserPreferencesEntity updatePreferences(int userId, UserPreferencesEntity updates) {
         UserPreferencesEntity prefs = getMyPreferences(userId);
         if (updates.getNotifyNews() != null) prefs.setNotifyNews(updates.getNotifyNews());
@@ -36,6 +41,14 @@ public class PreferencesService {
         prefs.setUpdatedAt(LocalDateTime.now());
         return prefsRepository.save(prefs);
     }
+
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "players-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-by-id", allEntries = true),
+        @CacheEvict(cacheNames = "players-by-team-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-all", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-by-player", allEntries = true)
+    })
     @Transactional
     public UserPreferencesEntity setFavoritePlayer(int userId, int playerId) {
         UserPreferencesEntity prefs = getMyPreferences(userId);
@@ -49,6 +62,14 @@ public class PreferencesService {
         syncFavoriteCount(player);
         return saved;
     }
+
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "players-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-by-id", allEntries = true),
+        @CacheEvict(cacheNames = "players-by-team-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-all", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-by-player", allEntries = true)
+    })
     @Transactional
     public UserPreferencesEntity clearFavoritePlayer(int userId, int playerId) {
         UserPreferencesEntity prefs = getMyPreferences(userId);
@@ -62,6 +83,36 @@ public class PreferencesService {
         syncFavoriteCount(previous);
         return saved;
     }
+
+    @Transactional
+    public UserPreferencesDto getMyPreferencesDto(int userId) {
+        return UserPreferencesDto.from(getMyPreferences(userId));
+    }
+
+    @Transactional
+    public UserPreferencesDto updatePreferencesDto(int userId, Boolean notifyNews, Boolean notifyVideos, Boolean notifyFees,
+                                                   Boolean notifyBenefits, Boolean notifyMatchResults) {
+        UserPreferencesEntity updates = new UserPreferencesEntity();
+        updates.setNotifyNews(notifyNews);
+        updates.setNotifyVideos(notifyVideos);
+        updates.setNotifyFees(notifyFees);
+        updates.setNotifyBenefits(notifyBenefits);
+        updates.setNotifyMatchResults(notifyMatchResults);
+        return UserPreferencesDto.from(updatePreferences(userId, updates));
+    }
+
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "players-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-by-id", allEntries = true),
+        @CacheEvict(cacheNames = "players-by-team-page", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-all", allEntries = true),
+        @CacheEvict(cacheNames = "player-stats-by-player", allEntries = true)
+    })
+    @Transactional
+    public UserPreferencesDto setFavoritePlayerDto(int userId, int playerId) {
+        return UserPreferencesDto.from(setFavoritePlayer(userId, playerId));
+    }
+
     private void syncFavoriteCount(PlayerEntity player) {
         if (player == null) return;
         player.setFavoriteCount((int) prefsRepository.countByFavoritePlayer_Id(player.getId()));

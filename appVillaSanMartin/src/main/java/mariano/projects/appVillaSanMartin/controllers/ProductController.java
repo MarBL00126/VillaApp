@@ -1,33 +1,36 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
-import mariano.projects.appVillaSanMartin.repositories.ProductCategoryRepository;
+import mariano.projects.appVillaSanMartin.models.dto.ProductCategoryDto;
+import mariano.projects.appVillaSanMartin.models.dto.ProductDto;
+import mariano.projects.appVillaSanMartin.models.dto.ProductVariantDto;
+import mariano.projects.appVillaSanMartin.services.ProductCategoryService;
+import mariano.projects.appVillaSanMartin.services.ProductService;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService productService;
-    private final ProductCategoryRepository categoryRepository;
+    private final ProductCategoryService productCategoryService;
 
-    public ProductController(ProductService productService, ProductCategoryRepository categoryRepository) {
+    public ProductController(ProductService productService, ProductCategoryService productCategoryService) {
         this.productService = productService;
-        this.categoryRepository = categoryRepository;
+        this.productCategoryService = productCategoryService;
     }
 
     @GetMapping({"", "/"})
-    public List<ProductEntity> getAll() { return productService.getAllActive(); }
+    public List<ProductDto> getAll() { return productService.getAllActive(); }
 
     @GetMapping("/{id}")
-    public ProductEntity getById(@PathVariable int id) { return productService.getById(id); }
+    public ProductDto getById(@PathVariable int id) { return productService.getById(id); }
 
     @GetMapping("/categories")
-    public List<ProductCategoryEntity> getCategories() { return categoryRepository.findByActiveTrue(); }
+    public List<ProductCategoryDto> getCategories() { return productCategoryService.getActiveCategories(); }
 
     @GetMapping("/category/{slug}")
-    public List<ProductEntity> getByCategory(@PathVariable String slug) { return productService.getByCategory(slug); }
+    public List<ProductDto> getByCategory(@PathVariable String slug) { return productService.getByCategory(slug); }
 
     @GetMapping("/{id}/variants")
-    public List<ProductVariantEntity> getVariants(@PathVariable int id) { return productService.getVariants(id); }
+    public List<ProductVariantDto> getVariants(@PathVariable int id) { return productService.getVariants(id); }
 }

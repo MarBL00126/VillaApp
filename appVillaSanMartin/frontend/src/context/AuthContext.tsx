@@ -27,11 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     const response = await authService.login(data);
     const authUser: AuthUser = {
+      id: response.id,
       email: response.email,
       name: response.name,
       role: response.role,
     };
     localStorage.setItem('token', response.token);
+    localStorage.setItem('refreshToken', response.refreshToken);
     localStorage.setItem('user', JSON.stringify(authUser));
     setUser(authUser);
   }, []);
@@ -41,7 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      void authService.logout(refreshToken);
+    }
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setUser(null);
   }, []);

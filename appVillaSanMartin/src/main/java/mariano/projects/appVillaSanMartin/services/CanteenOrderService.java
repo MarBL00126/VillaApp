@@ -1,10 +1,19 @@
 package mariano.projects.appVillaSanMartin.services;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.repositories.*;
 import lombok.RequiredArgsConstructor;
+import mariano.projects.appVillaSanMartin.entities.CanteenMenuItemEntity;
+import mariano.projects.appVillaSanMartin.entities.CanteenOrderEntity;
+import mariano.projects.appVillaSanMartin.entities.CanteenOrderItemEntity;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.CanteenOrderDto;
+import mariano.projects.appVillaSanMartin.repositories.CanteenMenuItemRepository;
+import mariano.projects.appVillaSanMartin.repositories.CanteenOrderItemRepository;
+import mariano.projects.appVillaSanMartin.repositories.CanteenOrderRepository;
+import mariano.projects.appVillaSanMartin.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +31,8 @@ public class CanteenOrderService {
         public int quantity;
     }
 
-    public CanteenOrderEntity createOrder(Integer userId, List<OrderItemRequest> items, String paymentMethod, String notes) {
+    @Transactional
+    public CanteenOrderDto createOrder(Integer userId, List<OrderItemRequest> items, String paymentMethod, String notes) {
         UserEntity user = null;
         if (userId != null) {
             user = userRepo.findById(userId).orElse(null);
@@ -59,18 +69,30 @@ public class CanteenOrderService {
             oi.setUnitPrice(mi.getPrice());
             itemRepo.save(oi);
         }
-        return saved;
+        return getByOrderNumber(saved.getOrderNumber());
     }
-    public CanteenOrderEntity getByOrderNumber(String orderNumber) {
-        return orderRepo.findByOrderNumber(orderNumber).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    @Transactional(readOnly = true)
+    public CanteenOrderDto getByOrderNumber(String orderNumber) {
+        return CanteenOrderDto.from(getByOrderNumberEntity(orderNumber));
     }
-    public List<CanteenOrderEntity> getMyOrders(int userId) { return orderRepo.findByUserIdOrderByCreatedAtDesc(userId); }
+
+    @Transactional(readOnly = true)
+    public List<CanteenOrderDto> getMyOrders(int userId) {
+        return orderRepo.findByUserIdOrderByCreatedAtDesc(userId).stream().map(CanteenOrderDto::from).toList();
+    }
+
+    @Transactional
     public void updateStatus(String orderNumber, String status) {
-        CanteenOrderEntity order = getByOrderNumber(orderNumber);
+        CanteenOrderEntity order = getByOrderNumberEntity(orderNumber);
         order.setStatus(status);
         if ("READY".equals(status)) {
             order.setReadyAt(LocalDateTime.now());
         }
         orderRepo.save(order);
+    }
+
+    private CanteenOrderEntity getByOrderNumberEntity(String orderNumber) {
+        return orderRepo.findByOrderNumber(orderNumber).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 }

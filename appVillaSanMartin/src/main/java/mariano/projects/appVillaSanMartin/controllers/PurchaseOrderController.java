@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 
-import mariano.projects.appVillaSanMartin.entities.PurchaseOrderEntity;
 import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.PurchaseOrderDto;
 import mariano.projects.appVillaSanMartin.models.requests.ValidateQrRequest;
 import mariano.projects.appVillaSanMartin.models.responses.QrValidationResponse;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
@@ -49,7 +49,7 @@ public class PurchaseOrderController {
         }
 
         @PostMapping
-        public ResponseEntity<PurchaseOrderEntity> createOrder(
+        public ResponseEntity<PurchaseOrderDto> createOrder(
                         @RequestParam int reservationId,
                         Authentication authentication) {
 
@@ -59,7 +59,7 @@ public class PurchaseOrderController {
         }
 
         @GetMapping("/my")
-        public ResponseEntity<List<PurchaseOrderEntity>> getMyOrders(
+        public ResponseEntity<List<PurchaseOrderDto>> getMyOrders(
                         Authentication authentication) {
 
                 UserEntity user = getAuthenticatedUser(authentication);
@@ -67,14 +67,10 @@ public class PurchaseOrderController {
                                 purchaseOrderService.getMyOrders((long) user.getId()));
         }
 
+        // Solo ADMIN (ver SecurityConfig): confirmación manual de pago
         @PostMapping("/{id}/confirm-payment")
-        public ResponseEntity<PurchaseOrderEntity> confirmPayment(
-                        @PathVariable int id,
-                        Authentication authentication) {
-
-                UserEntity user = getAuthenticatedUser(authentication);
-                return ResponseEntity.ok(
-                                purchaseOrderService.confirmPayment(id, user.getId()));
+        public ResponseEntity<PurchaseOrderDto> confirmPayment(@PathVariable int id) {
+                return ResponseEntity.ok(purchaseOrderService.confirmPaymentResponse(id));
         }
 
         @PostMapping("/validate-qr")
@@ -93,7 +89,7 @@ public class PurchaseOrderController {
         }
 
         @GetMapping("/{id}")
-        public ResponseEntity<PurchaseOrderEntity> getOrderById(
+        public ResponseEntity<PurchaseOrderDto> getOrderById(
                         @PathVariable int id,
                         Authentication authentication) {
 

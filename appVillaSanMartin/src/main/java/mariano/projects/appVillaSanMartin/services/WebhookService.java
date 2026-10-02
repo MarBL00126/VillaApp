@@ -24,7 +24,9 @@ import java.util.HexFormat;
 @Service
 public class WebhookService {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // CRÍTICO-3 FIX: ObjectMapper inyectado por Spring (usa la config global de JacksonConfig)
+    // en lugar de instanciarse manualmente con `new ObjectMapper()`.
+    private final ObjectMapper objectMapper;
     private final MercadoPagoService mercadoPagoService;
     private final PurchaseOrderService purchaseOrderService;
     private final PaymentRecordRepository paymentRecordRepository;
@@ -34,16 +36,22 @@ public class WebhookService {
     private String webhookSecret;
 
     public WebhookService(
+            ObjectMapper objectMapper,
             MercadoPagoService mercadoPagoService,
             PurchaseOrderService purchaseOrderService,
             PaymentRecordRepository paymentRecordRepository,
             PurchaseOrderRepository purchaseOrderRepository) {
+        this.objectMapper = objectMapper;
         this.mercadoPagoService = mercadoPagoService;
         this.purchaseOrderService = purchaseOrderService;
         this.paymentRecordRepository = paymentRecordRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
     }
 
+    // CRÍTICO-3 FIX: Un único @Transactional que abarca TODO el procesamiento del webhook.
+    // Así el SELECT FOR UPDATE (findByIdForUpdate), el UPDATE del PaymentRecord y la
+    // confirmación de la orden ocurren dentro de la misma transacción de base de datos,
+    // eliminando la ventana de concurrencia entre webhooks duplicados de MercadoPago.
     @Transactional
     public void processWebhook(
             String rawBody,
@@ -135,8 +143,11 @@ public class WebhookService {
         }
     }
 
-    @Transactional
-    public void processPayment(String paymentId) {
+    // CRÍTICO-3 FIX: processPayment ya no es público ni tiene @Transactional propio.
+    // Corre dentro de la transacción abierta por processWebhook().
+    // Usa findByIdForUpdate() → SELECT FOR UPDATE para evitar la race condition
+    // cuando MercadoPago envía el mismo webhook más de una vez simultáneamente.
+    private void processPayment(String paymentId) {
 
         Payment payment = mercadoPagoService.getPayment(paymentId);
 
@@ -164,7 +175,11 @@ public class WebhookService {
                             + externalReference);
         }
 
-        PurchaseOrderEntity order = purchaseOrderRepository.findById(orderId)
+        // CRÍTICO-3 FIX: findByIdForUpdate → SELECT ... FOR UPDATE
+        // Bloquea la fila en BD para este orderId mientras dura la transacción,
+        // garantizando que un segundo webhook concurrente quede bloqueado hasta
+        // que el primero termine (en ese punto verá status=PAID y retornará sin efecto).
+        PurchaseOrderEntity order = purchaseOrderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new RuntimeException(
                         "Orden no encontrada: "
                                 + orderId));

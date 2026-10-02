@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 
 interface FetchResult<T> {
@@ -8,25 +9,23 @@ interface FetchResult<T> {
   refetch: () => void;
 }
 
+// La URL es la clave de caché: componentes distintos que piden la misma URL comparten un único request,
+// y al cambiar la URL no se muestran datos de la anterior mientras carga la nueva.
 export function useFetch<T>(url: string): FetchResult<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [revision, setRevision] = useState(0);
+  const query = useQuery<T>({
+    queryKey: ['fetch', url],
+    queryFn: async () => (await api.get<T>(url)).data,
+  });
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-    api
-      .get<T>(url)
-      .then((res) => { if (alive) setData(res.data); })
-      .catch(() => { if (alive) setError('No se pudieron cargar los datos. Verificá tu conexión.'); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [url, revision]);
+  const { refetch: queryRefetch } = query;
+  const refetch = useCallback(() => {
+    void queryRefetch();
+  }, [queryRefetch]);
 
-  const refetch = useCallback(() => setRevision((r) => r + 1), []);
-
-  return { data, loading, error, refetch };
+  return {
+    data: query.data ?? null,
+    loading: query.isPending,
+    error: query.isError ? 'No se pudieron cargar los datos. Verificá tu conexión.' : null,
+    refetch,
+  };
 }

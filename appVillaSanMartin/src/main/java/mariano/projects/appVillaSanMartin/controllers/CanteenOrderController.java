@@ -1,10 +1,12 @@
 package mariano.projects.appVillaSanMartin.controllers;
-import mariano.projects.appVillaSanMartin.entities.*;
-import mariano.projects.appVillaSanMartin.services.*;
+import mariano.projects.appVillaSanMartin.entities.UserEntity;
+import mariano.projects.appVillaSanMartin.models.dto.CanteenOrderDto;
 import mariano.projects.appVillaSanMartin.repositories.UserRepository;
+import mariano.projects.appVillaSanMartin.services.CanteenOrderService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +31,9 @@ public class CanteenOrderController {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @PostMapping({"", "/"})
-    public CanteenOrderEntity createOrder(@RequestBody Map<String, Object> body, Authentication auth) {
+    public CanteenOrderDto createOrder(@RequestBody Map<String, Object> body, Authentication auth) {
         List<Map<String, Integer>> itemsList = (List<Map<String, Integer>>) body.get("items");
         List<CanteenOrderService.OrderItemRequest> reqs = itemsList.stream().map(m -> {
             CanteenOrderService.OrderItemRequest req = new CanteenOrderService.OrderItemRequest();
@@ -46,12 +49,12 @@ public class CanteenOrderController {
     }
 
     @GetMapping("/track/{orderNumber}")
-    public CanteenOrderEntity trackOrder(@PathVariable String orderNumber) {
+    public CanteenOrderDto trackOrder(@PathVariable String orderNumber) {
         return orderService.getByOrderNumber(orderNumber);
     }
 
     @GetMapping("/my")
-    public List<CanteenOrderEntity> getMyOrders(Authentication auth) {
+    public List<CanteenOrderDto> getMyOrders(Authentication auth) {
         UserEntity u = getUser(auth);
         if (u == null) return List.of();
         return orderService.getMyOrders(u.getId());

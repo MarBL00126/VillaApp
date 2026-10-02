@@ -20,6 +20,7 @@ export default function TicketScreen() {
 
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         loadTicketTypes();
@@ -36,6 +37,8 @@ export default function TicketScreen() {
         } catch (error) {
             console.error(error);
             alert("No se pudieron cargar los tipos de entrada");
+        } finally {
+            setLoaded(true);
         }
     };
 
@@ -94,6 +97,10 @@ export default function TicketScreen() {
     return (
         <div>
             <h1>Comprar entradas</h1>
+
+            {loaded && ticketTypes.length === 0 && (
+                <p>No hay entradas disponibles para este partido.</p>
+            )}
 
             {ticketTypes.map((ticketType) => (
 

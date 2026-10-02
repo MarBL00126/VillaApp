@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
 import { newsService } from '../services/newsService';
 import type { News } from '../types';
+import { PLACEHOLDER_IMAGE } from '../hooks/placeholder';
 
 export function NewsDetailScreen() {
   const { id } = useParams();
@@ -176,7 +177,7 @@ export function NewsDetailScreen() {
   return (
     <div style={styles.container}>
       <div style={styles.hero}>
-        <img src={news.imageUrl || 'https://via.placeholder.com/600'} style={styles.heroImg} alt={news.title} />
+        <img src={news.imageUrl || PLACEHOLDER_IMAGE} style={styles.heroImg} alt={news.title} />
         <button style={styles.backBtn} onClick={() => navigate(-1)}>← Volver</button>
       </div>
       
@@ -202,7 +203,7 @@ export function NewsDetailScreen() {
           <h3 style={styles.relatedTitle}>Noticias relacionadas</h3>
           {related.map(r => (
             <div key={r.id} style={styles.relatedCard} onClick={() => navigate(`/news/${r.id}`)}>
-              <img src={r.imageUrl || 'https://via.placeholder.com/100'} style={styles.relatedImg} alt={r.title} />
+              <img src={r.imageUrl || PLACEHOLDER_IMAGE} style={styles.relatedImg} alt={r.title} />
               <div style={styles.relatedInfo}>
                 <h4 style={styles.relatedCardTitle}>{r.title}</h4>
                 <span style={styles.relatedDate}>{new Date(r.publishedAt).toLocaleDateString('es-AR')}</span>

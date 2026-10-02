@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
 import { newsService } from '../services/newsService';
 import type { FavoriteNews } from '../types';
+import { PLACEHOLDER_IMAGE } from '../hooks/placeholder';
 
 export function FavoriteNewsScreen() {
   const navigate = useNavigate();
@@ -130,7 +131,7 @@ export function FavoriteNewsScreen() {
         <div style={styles.list}>
           {favorites.map(({ id, news }) => (
             <div key={id} style={styles.card} onClick={() => navigate(`/news/${news.id}`)}>
-              <img src={news.imageUrl || 'https://via.placeholder.com/120'} alt={news.title} style={styles.image} />
+              <img src={news.imageUrl || PLACEHOLDER_IMAGE} alt={news.title} style={styles.image} />
               <div style={styles.body}>
                 <div style={styles.category}>{news.category?.name}</div>
                 <h3 style={styles.headline}>{news.title}</h3>

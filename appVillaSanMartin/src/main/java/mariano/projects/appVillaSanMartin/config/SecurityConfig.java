@@ -83,19 +83,35 @@ public class SecurityConfig {
                                                                 "/",
                                                                 "/index.html",
                                                                 "/assets/**",
+                                                                "/*.js",
+                                                                "/*.css",
+                                                                "/*.png",
+                                                                "/*.svg",
+                                                                "/*.ico",
+                                                                "/*.webmanifest",
                                                                 "/favicon.ico",
                                                                 "/favicon.svg",
+                                                                "/apple-touch-icon.png",
+                                                                "/manifest.webmanifest",
+                                                                "/registerSW.js",
+                                                                "/sw.js",
                                                                 "/icons.svg",
+                                                                "/**/favicon.svg",
+                                                                "/**/manifest.webmanifest",
+                                                                "/**/registerSW.js",
                                                                 "/health",
                                                                 "/error",
                                                                 "/actuator/health").permitAll()
                                                 // Rutas SPA (frontend routes)
                                                 .requestMatchers(
                                                                 "/login", "/register", "/players/**", "/fixture",
-                                                                "/stats", "/profile", "/matches/**", "/orders/**",
+                                                                "/stats", "/stats/**", "/profile", "/matches/**", "/orders/**",
                                                                 "/payment/**", "/admin/**",
                                                                 "/game/**", "/rewards/**", "/community/**",
-                                                                "/cantina/**", "/shop/**", "/news/**", "/media/**").permitAll()
+                                                                "/cantina/**", "/shop/**", "/news/**", "/media/**",
+                                                                "/stadium", "/standings", "/press/**", "/fees",
+                                                                "/team", "/notifications", "/preferences",
+                                                                "/membership/**", "/benefits").permitAll()
                                                 // Auth API
                                                 .requestMatchers(
                                                                 "/api/users/register",

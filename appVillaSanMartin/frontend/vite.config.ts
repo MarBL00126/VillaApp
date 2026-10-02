@@ -86,7 +86,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: './',
+  base: '/',
   server: {
     proxy: {
       '/api': {

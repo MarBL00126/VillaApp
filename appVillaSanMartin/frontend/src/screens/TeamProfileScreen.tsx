@@ -57,6 +57,15 @@ export function TeamProfileScreen() {
       fontWeight: 'bold',
       marginBottom: '15px',
     },
+    avatarImg: {
+      width: '80px',
+      height: '80px',
+      borderRadius: '50%',
+      objectFit: 'cover',
+      marginBottom: '15px',
+      border: `2px solid ${theme.colors.secondary}`,
+      backgroundColor: theme.colors.border,
+    },
     name: {
       margin: '0 0 5px 0',
       fontSize: theme.fontSizes.lg,
@@ -95,7 +104,11 @@ export function TeamProfileScreen() {
         <div style={styles.grid}>
           {staff.map(member => (
             <div key={member.id} style={styles.card}>
-              <div style={styles.avatar}>{getInitials(member.name)}</div>
+              {member.photoUrl ? (
+                <img src={member.photoUrl} alt={member.name} style={styles.avatarImg} />
+              ) : (
+                <div style={styles.avatar}>{getInitials(member.name)}</div>
+              )}
               <h3 style={styles.name}>{member.name}</h3>
               <div style={styles.roleBadge}>{member.role}</div>
               {member.bio && (

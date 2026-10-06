@@ -40,6 +40,21 @@ const emptyItem = (): MenuItemPayload => ({
   available: true,
 });
 
+const IMAGE_FIELD_BY_RESOURCE: Record<string, string> = {
+  staff: 'photoUrl',
+  teams: 'logoUrl',
+  products: 'imageUrl',
+  news: 'imageUrl',
+  photos: 'imageUrl',
+  galleries: 'coverImageUrl',
+  badges: 'imageUrl',
+  benefits: 'imageUrl',
+  rewards: 'imageUrl',
+  videos: 'thumbnail',
+};
+
+const IMAGE_FIELD_CANDIDATES = ['imageUrl', 'photoUrl', 'coverImageUrl', 'thumbnail', 'logoUrl'];
+
 export function AdminScreen() {
   const [tab, setTab] = useState<Tab>('players');
   const [dashboard, setDashboard] = useState<Record<string, number>>({});
@@ -71,6 +86,7 @@ export function AdminScreen() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
 
   const loadData = async () => {
     setError('');
@@ -289,6 +305,34 @@ export function AdminScreen() {
     await refreshAfterSave('Stock actualizado.');
   };
 
+  const uploadAndUseImage = async (target: string, file: File, onUploaded: (url: string) => void) => {
+    setError('');
+    setUploadingTarget(target);
+    try {
+      const uploaded = await adminService.uploadImage(file, target);
+      onUploaded(uploaded.url);
+      setMessage('Imagen adjuntada. Guarda el registro para aplicar el cambio.');
+      setTimeout(() => setMessage(''), 2500);
+    } catch {
+      setError('No se pudo subir la imagen. Usa JPG, PNG, WEBP o GIF de hasta 5MB.');
+    } finally {
+      setUploadingTarget(null);
+    }
+  };
+
+  const applyImageToResourceJson = (url: string) => {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(resourceJson) as Record<string, unknown>;
+    } catch {
+      parsed = {};
+    }
+    const field = IMAGE_FIELD_BY_RESOURCE[selectedResource]
+      ?? IMAGE_FIELD_CANDIDATES.find((candidate) => candidate in parsed)
+      ?? 'imageUrl';
+    setResourceJson(JSON.stringify({ ...parsed, [field]: url }, null, 2));
+  };
+
   if (loading) return <div style={styles.page}>Cargando panel admin...</div>;
 
   return (
@@ -361,7 +405,13 @@ export function AdminScreen() {
               <NumberInput label="Altura" value={playerForm.height} step="0.01" onChange={(height) => setPlayerForm({ ...playerForm, height })} />
               <TextInput label="Nacionalidad" value={playerForm.nationality} onChange={(nationality) => setPlayerForm({ ...playerForm, nationality })} />
               <TextInput label="Nacimiento" type="date" value={playerForm.birthDate} onChange={(birthDate) => setPlayerForm({ ...playerForm, birthDate })} />
-              <TextInput label="URL imagen" value={playerForm.imageUrl ?? ''} onChange={(imageUrl) => setPlayerForm({ ...playerForm, imageUrl })} />
+              <ImageInput
+                label="Foto"
+                value={playerForm.imageUrl ?? ''}
+                uploading={uploadingTarget === 'players'}
+                onChange={(imageUrl) => setPlayerForm({ ...playerForm, imageUrl })}
+                onFile={(file) => uploadAndUseImage('players', file, (imageUrl) => setPlayerForm((current) => ({ ...current, imageUrl })))}
+              />
             </div>
             <label style={styles.checkboxLabel}>
               <input type="checkbox" checked={playerForm.active} onChange={(event) => setPlayerForm({ ...playerForm, active: event.target.checked })} />
@@ -470,7 +520,13 @@ export function AdminScreen() {
               <TextInput label="Nombre" value={itemForm.name} onChange={(name) => setItemForm({ ...itemForm, name })} />
               <TextInput label="Descripcion" value={itemForm.description ?? ''} onChange={(description) => setItemForm({ ...itemForm, description })} />
               <NumberInput label="Precio" value={itemForm.price} step="0.01" onChange={(price) => setItemForm({ ...itemForm, price })} />
-              <TextInput label="URL imagen" value={itemForm.imageUrl ?? ''} onChange={(imageUrl) => setItemForm({ ...itemForm, imageUrl })} />
+              <ImageInput
+                label="Foto"
+                value={itemForm.imageUrl ?? ''}
+                uploading={uploadingTarget === 'cantina'}
+                onChange={(imageUrl) => setItemForm({ ...itemForm, imageUrl })}
+                onFile={(file) => uploadAndUseImage('cantina', file, (imageUrl) => setItemForm((current) => ({ ...current, imageUrl })))}
+              />
               <label style={styles.checkboxLabel}>
                 <input type="checkbox" checked={itemForm.available} onChange={(event) => setItemForm({ ...itemForm, available: event.target.checked })} />
                 Disponible
@@ -689,6 +745,13 @@ export function AdminScreen() {
 
             <div style={styles.form}>
               <h3 style={styles.compactTitle}>{selectedResourceId === null ? 'Crear registro' : `Editar ID ${selectedResourceId}`}</h3>
+              <ImageInput
+                label="Foto del registro"
+                value={readImageValue(resourceJson, selectedResource)}
+                uploading={uploadingTarget === selectedResource}
+                onChange={applyImageToResourceJson}
+                onFile={(file) => uploadAndUseImage(selectedResource || 'general', file, applyImageToResourceJson)}
+              />
               <textarea
                 style={styles.jsonEditor}
                 value={resourceJson}
@@ -729,11 +792,60 @@ function getRowTitle(row: Record<string, unknown>, index: number) {
   return `Registro ${index + 1}`;
 }
 
+function readImageValue(json: string, resource: string) {
+  try {
+    const parsed = JSON.parse(json) as Record<string, unknown>;
+    const field = IMAGE_FIELD_BY_RESOURCE[resource] ?? IMAGE_FIELD_CANDIDATES.find((candidate) => candidate in parsed);
+    const value = field ? parsed[field] : undefined;
+    return typeof value === 'string' ? value : '';
+  } catch {
+    return '';
+  }
+}
+
 function Summary({ label, value }: { label: string; value?: number }) {
   return (
     <div style={styles.summaryCard}>
       <span style={styles.summaryValue}>{value ?? 0}</span>
       <span style={styles.muted}>{label}</span>
+    </div>
+  );
+}
+
+function ImageInput({
+  label,
+  value,
+  uploading,
+  onChange,
+  onFile,
+}: {
+  label: string;
+  value: string;
+  uploading: boolean;
+  onChange: (value: string) => void;
+  onFile: (file: File) => void;
+}) {
+  return (
+    <div style={styles.label}>
+      <span>{label}</span>
+      <input type="text" style={styles.input} value={value} onChange={(event) => onChange(event.target.value)} placeholder="/uploads/..." />
+      <div style={styles.imageControlRow}>
+        {value ? <img src={value} alt="" style={styles.imagePreview} /> : <span style={styles.muted}>Sin foto adjunta</span>}
+        <label style={{ ...styles.secondaryBtn, ...(uploading ? styles.disabledBtn : {}) }}>
+          {uploading ? 'Subiendo...' : 'Adjuntar foto'}
+          <input
+            type="file"
+            accept="image/*"
+            style={styles.fileInput}
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              if (file) onFile(file);
+            }}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -775,6 +887,9 @@ const styles: Record<string, React.CSSProperties> = {
   advancedGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'start' },
   label: { display: 'flex', flexDirection: 'column', gap: '6px', color: theme.colors.textMuted, fontSize: theme.fontSizes.xs, fontWeight: 700, marginBottom: '10px' },
   input: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.sm, padding: '9px 10px', fontSize: theme.fontSizes.sm, color: theme.colors.text, backgroundColor: theme.colors.background },
+  imageControlRow: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' },
+  imagePreview: { width: '44px', height: '44px', borderRadius: theme.borderRadius.sm, objectFit: 'cover', border: `1px solid ${theme.colors.border}`, backgroundColor: theme.colors.background },
+  fileInput: { display: 'none' },
   textarea: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.sm, padding: '9px 10px', minHeight: '76px', fontSize: theme.fontSizes.sm, color: theme.colors.text, backgroundColor: theme.colors.background },
   jsonEditor: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.sm, padding: '10px', minHeight: '420px', width: '100%', boxSizing: 'border-box', fontFamily: 'Consolas, Monaco, monospace', fontSize: theme.fontSizes.xs, color: theme.colors.text, backgroundColor: theme.colors.background },
   helpText: { margin: '0 0 12px', color: theme.colors.textMuted, fontSize: theme.fontSizes.sm, lineHeight: 1.45 },
@@ -783,6 +898,7 @@ const styles: Record<string, React.CSSProperties> = {
   actions: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
   primaryBtn: { border: 'none', borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.primary, color: theme.colors.white, padding: '9px 12px', cursor: 'pointer', fontWeight: 800 },
   secondaryBtn: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.primary, padding: '8px 11px', cursor: 'pointer', fontWeight: 700 },
+  disabledBtn: { opacity: 0.6, cursor: 'wait' },
   primaryLink: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', border: 'none', borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.primary, color: theme.colors.white, padding: '9px 12px', cursor: 'pointer', fontWeight: 800, textDecoration: 'none' },
   secondaryLink: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.primary, padding: '8px 11px', cursor: 'pointer', fontWeight: 700, textDecoration: 'none' },
   dangerBtn: { border: `1px solid ${theme.colors.error}`, borderRadius: theme.borderRadius.md, backgroundColor: theme.colors.surface, color: theme.colors.error, padding: '8px 11px', cursor: 'pointer', fontWeight: 700 },

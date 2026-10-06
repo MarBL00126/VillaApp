@@ -25,6 +25,10 @@ spring:
       media-types:
         css: text/css
         js: application/javascript
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
 server:
   port: ${PORT:8080}
@@ -47,6 +51,7 @@ app:
   # CRÍTICO-4 FIX: Setear APP_BASE_URL en producción con el dominio real.
   # Ejemplo Railway: APP_BASE_URL=https://villaapp-production.up.railway.app
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  upload-dir: ${APP_UPLOAD_DIR:uploads}
   admin:
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}

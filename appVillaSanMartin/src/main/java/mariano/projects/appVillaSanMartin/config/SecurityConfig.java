@@ -88,6 +88,7 @@ public class SecurityConfig {
                                                                 "/*.png",
                                                                 "/*.svg",
                                                                 "/*.ico",
+                                                                "/uploads/**",
                                                                 "/*.webmanifest",
                                                                 "/favicon.ico",
                                                                 "/favicon.svg",

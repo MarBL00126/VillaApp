@@ -55,6 +55,11 @@ export interface AdminResourceInfo {
   description: string;
 }
 
+export interface UploadImageResponse {
+  url: string;
+  fileName: string;
+}
+
 export const adminService = {
   getDashboard: () => api.get<Record<string, number>>('/admin/dashboard').then((r) => r.data),
   getDashboardFull: () => api.get<AdminDashboardFull>('/admin/dashboard/full').then((r) => r.data),
@@ -98,6 +103,15 @@ export const adminService = {
   getConfig: () => api.get<AppConfig[]>('/admin/config').then((r) => r.data),
   setConfigValue: (key: string, value: string) =>
     api.put<AppConfig>(`/admin/config/${encodeURIComponent(key)}`, { value }).then((r) => r.data),
+
+  uploadImage: (file: File, target = 'general') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('target', target);
+    return api.post<UploadImageResponse>('/admin/uploads', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
 
   getResources: () => api.get<AdminResourceInfo[]>('/admin/resources').then((r) => r.data),
   getResourceRows: (resource: string) => api.get<Record<string, unknown>[]>(`/admin/resources/${resource}`).then((r) => r.data),

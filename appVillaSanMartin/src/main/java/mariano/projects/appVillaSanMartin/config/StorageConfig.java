@@ -3,7 +3,7 @@ package mariano.projects.appVillaSanMartin.config;
 import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,10 +17,7 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 public class StorageConfig {
 
     @Bean
-    @ConditionalOnExpression(
-            "'${storage.endpoint:}' != '' && '${storage.access-key:}' != '' && '${storage.secret-key:}' != ''"
-                    + " && '${storage.bucket:}' != '' && '${storage.public-url:}' != ''"
-    )
+    @ConditionalOnProperty(prefix = "storage", name = "provider", havingValue = "s3")
     public S3Client s3Client(
             @Value("${storage.endpoint}") String endpoint,
             @Value("${storage.access-key}") String accessKey,

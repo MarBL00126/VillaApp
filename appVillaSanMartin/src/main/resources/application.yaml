@@ -59,6 +59,7 @@ app:
     surname: ${ADMIN_SURNAME:Villa}
     phone: ${ADMIN_PHONE:0000000000}
 storage:
+  provider: ${STORAGE_PROVIDER:local}
   endpoint: ${STORAGE_ENDPOINT:}
   public-url: ${STORAGE_PUBLIC_URL:}
   access-key: ${STORAGE_ACCESS_KEY:}

@@ -55,6 +55,19 @@ const IMAGE_FIELD_BY_RESOURCE: Record<string, string> = {
 
 const IMAGE_FIELD_CANDIDATES = ['imageUrl', 'photoUrl', 'coverImageUrl', 'thumbnail', 'logoUrl'];
 
+const RESOURCE_DRAFTS: Record<string, Record<string, unknown>> = {
+  staff: { name: '', role: '', photoUrl: '', bio: '', active: true },
+  products: { name: '', description: '', price: 0, imageUrl: '', active: true },
+  news: { title: '', summary: '', content: '', imageUrl: '', featured: false, author: '' },
+  photos: { imageUrl: '', caption: '', sortOrder: 0 },
+  galleries: { title: '', coverImageUrl: '', eventDate: '' },
+  videos: { title: '', description: '', url: '', thumbnail: '', type: '', publishedAt: '' },
+  benefits: { title: '', description: '', imageUrl: '', active: true },
+  rewards: { name: '', description: '', imageUrl: '', pointsCost: 0, stock: 0, active: true },
+  badges: { name: '', description: '', imageUrl: '', pointsRequired: 0 },
+  teams: { name: '', city: '', shortName: '', logoUrl: '', stadium: '', category: '', primaryTeam: false, active: true },
+};
+
 export function AdminScreen() {
   const [tab, setTab] = useState<Tab>('players');
   const [dashboard, setDashboard] = useState<Record<string, number>>({});
@@ -132,7 +145,7 @@ export function AdminScreen() {
       const rows = await adminService.getResourceRows(resource);
       setResourceRows(rows);
       setSelectedResourceId(null);
-      setResourceJson('{}');
+      setResourceJson(emptyResourceDraft(resource));
     } catch {
       setError('No se pudo cargar el recurso seleccionado.');
     } finally {
@@ -259,7 +272,7 @@ export function AdminScreen() {
     try {
       parsed = JSON.parse(resourceJson) as Record<string, unknown>;
     } catch {
-      setError('El JSON no es valido.');
+      setError('No se pudieron leer los datos del formulario.');
       return;
     }
     if (selectedResourceId === null) {
@@ -365,7 +378,7 @@ export function AdminScreen() {
         <button style={{ ...styles.tab, ...(tab === 'cantina' ? styles.activeTab : {}) }} onClick={() => setTab('cantina')}>Cantina</button>
         <button style={{ ...styles.tab, ...(tab === 'config' ? styles.activeTab : {}) }} onClick={() => setTab('config')}>Config</button>
         <button style={{ ...styles.tab, ...(tab === 'stadium' ? styles.activeTab : {}) }} onClick={() => setTab('stadium')}>Estadio</button>
-        <button style={{ ...styles.tab, ...(tab === 'advanced' ? styles.activeTab : {}) }} onClick={() => setTab('advanced')}>Avanzado</button>
+        <button style={{ ...styles.tab, ...(tab === 'advanced' ? styles.activeTab : {}) }} onClick={() => setTab('advanced')}>Modulos</button>
       </div>
 
       {tab === 'dashboard' && (
@@ -566,7 +579,7 @@ export function AdminScreen() {
         <section>
           <div style={styles.form}>
             <h2 style={styles.sectionTitle}>Noticias</h2>
-            <p style={styles.helpText}>Usa el editor avanzado para altas, edicion y eliminacion de noticias y categorias.</p>
+            <p style={styles.helpText}>Usa el editor de modulos para altas, edicion y eliminacion de noticias y categorias.</p>
             <div style={styles.actions}>
               <button style={styles.primaryBtn} onClick={() => openAdvancedResource('news')}>Abrir noticias</button>
               <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('news-categories')}>Abrir categorias</button>
@@ -669,7 +682,7 @@ export function AdminScreen() {
         <section>
           <div style={styles.form}>
             <h2 style={styles.sectionTitle}>Estadio</h2>
-            <p style={styles.helpText}>Edita informacion general, sectores y servicios desde el editor avanzado.</p>
+            <p style={styles.helpText}>Edita informacion general, sectores y servicios desde el editor de modulos.</p>
             <div style={styles.actions}>
               <button style={styles.primaryBtn} onClick={() => openAdvancedResource('stadium-info')}>Info general</button>
               <button style={styles.secondaryBtn} onClick={() => openAdvancedResource('stadium-sectors')}>Sectores</button>
@@ -682,9 +695,9 @@ export function AdminScreen() {
       {tab === 'advanced' && (
         <section>
           <div style={styles.form}>
-            <h2 style={styles.sectionTitle}>Editor avanzado</h2>
+            <h2 style={styles.sectionTitle}>Gestion de modulos</h2>
             <p style={styles.helpText}>
-              Selecciona cualquier modulo ya implementado, edita el JSON del registro y guarda. Para relaciones, conserva objetos con su id.
+              Selecciona un modulo, elegi un registro y actualiza sus datos.
             </p>
             <label style={styles.label}>
               Recurso
@@ -707,10 +720,10 @@ export function AdminScreen() {
                 style={styles.primaryBtn}
                 onClick={() => {
                   setSelectedResourceId(null);
-                  setResourceJson('{}');
+                  setResourceJson(emptyResourceDraft(selectedResource));
                 }}
               >
-                Nuevo JSON
+                Nuevo registro
               </button>
             </div>
           </div>
@@ -752,11 +765,10 @@ export function AdminScreen() {
                 onChange={applyImageToResourceJson}
                 onFile={(file) => uploadAndUseImage(selectedResource || 'general', file, applyImageToResourceJson)}
               />
-              <textarea
-                style={styles.jsonEditor}
+              <ResourceFields
                 value={resourceJson}
-                spellCheck={false}
-                onChange={(event) => setResourceJson(event.target.value)}
+                resource={selectedResource}
+                onChange={setResourceJson}
               />
               <div style={styles.actions}>
                 <button style={styles.primaryBtn} onClick={() => run(saveResourceJson)}>
@@ -792,6 +804,18 @@ function getRowTitle(row: Record<string, unknown>, index: number) {
   return `Registro ${index + 1}`;
 }
 
+function emptyResourceDraft(resource: string) {
+  return JSON.stringify(RESOURCE_DRAFTS[resource] ?? {}, null, 2);
+}
+
+function parseResourceValue(value: string) {
+  try {
+    return JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 function readImageValue(json: string, resource: string) {
   try {
     const parsed = JSON.parse(json) as Record<string, unknown>;
@@ -803,11 +827,125 @@ function readImageValue(json: string, resource: string) {
   }
 }
 
+function updateResourceValue(json: string, field: string, value: unknown) {
+  const parsed = parseResourceValue(json);
+  return JSON.stringify({ ...parsed, [field]: value }, null, 2);
+}
+
+function updateRelationValue(json: string, field: string, id: number) {
+  const parsed = parseResourceValue(json);
+  const current = parsed[field];
+  const relation = current && typeof current === 'object' && !Array.isArray(current) ? current as Record<string, unknown> : {};
+  return JSON.stringify({ ...parsed, [field]: { ...relation, id } }, null, 2);
+}
+
+function formatFieldLabel(field: string) {
+  const labels: Record<string, string> = {
+    active: 'Activo',
+    author: 'Autor',
+    bio: 'Biografia',
+    caption: 'Epigrafe',
+    category: 'Categoria',
+    city: 'Ciudad',
+    content: 'Contenido',
+    description: 'Descripcion',
+    eventDate: 'Fecha',
+    featured: 'Destacada',
+    name: 'Nombre',
+    pointsCost: 'Costo en puntos',
+    pointsRequired: 'Puntos requeridos',
+    price: 'Precio',
+    primaryTeam: 'Equipo principal',
+    publishedAt: 'Publicado',
+    role: 'Rol',
+    shortName: 'Nombre corto',
+    sortOrder: 'Orden',
+    stadium: 'Estadio',
+    stock: 'Stock',
+    summary: 'Resumen',
+    team: 'Equipo',
+    title: 'Titulo',
+    type: 'Tipo',
+    url: 'Enlace',
+  };
+  return labels[field] ?? field.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+}
+
 function Summary({ label, value }: { label: string; value?: number }) {
   return (
     <div style={styles.summaryCard}>
       <span style={styles.summaryValue}>{value ?? 0}</span>
       <span style={styles.muted}>{label}</span>
+    </div>
+  );
+}
+
+function ResourceFields({ value, resource, onChange }: { value: string; resource: string; onChange: (value: string) => void }) {
+  const data = parseResourceValue(value);
+  const imageField = IMAGE_FIELD_BY_RESOURCE[resource] ?? IMAGE_FIELD_CANDIDATES.find((candidate) => candidate in data);
+  const entries = Object.entries(data).filter(([field, fieldValue]) => {
+    if (field === 'id' || field === imageField || IMAGE_FIELD_CANDIDATES.includes(field)) return false;
+    if (Array.isArray(fieldValue)) return false;
+    return ['string', 'number', 'boolean', 'object'].includes(typeof fieldValue) || fieldValue === null;
+  });
+
+  if (entries.length === 0) {
+    return <p style={styles.muted}>Selecciona un registro o crea uno nuevo para completar sus datos.</p>;
+  }
+
+  return (
+    <div style={styles.generatedFields}>
+      {entries.map(([field, fieldValue]) => {
+        const label = formatFieldLabel(field);
+        if (typeof fieldValue === 'boolean') {
+          return (
+            <label key={field} style={styles.checkboxLabel}>
+              <input type="checkbox" checked={fieldValue} onChange={(event) => onChange(updateResourceValue(value, field, event.target.checked))} />
+              {label}
+            </label>
+          );
+        }
+        if (fieldValue && typeof fieldValue === 'object') {
+          const relation = fieldValue as Record<string, unknown>;
+          const id = typeof relation.id === 'number' ? relation.id : 0;
+          return (
+            <NumberInput
+              key={field}
+              label={`${label} relacionado`}
+              value={id}
+              onChange={(nextId) => onChange(updateRelationValue(value, field, nextId))}
+            />
+          );
+        }
+        if (typeof fieldValue === 'number') {
+          return (
+            <NumberInput
+              key={field}
+              label={label}
+              value={fieldValue}
+              step={field.toLowerCase().includes('price') ? '0.01' : '1'}
+              onChange={(nextValue) => onChange(updateResourceValue(value, field, nextValue))}
+            />
+          );
+        }
+        const text = fieldValue === null ? '' : String(fieldValue);
+        if (['bio', 'content', 'description', 'summary'].includes(field)) {
+          return (
+            <label key={field} style={styles.label}>
+              {label}
+              <textarea style={styles.textarea} value={text} onChange={(event) => onChange(updateResourceValue(value, field, event.target.value))} />
+            </label>
+          );
+        }
+        return (
+          <TextInput
+            key={field}
+            label={label}
+            value={text}
+            onChange={(nextValue) => onChange(updateResourceValue(value, field, nextValue))}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -828,7 +966,6 @@ function ImageInput({
   return (
     <div style={styles.label}>
       <span>{label}</span>
-      <input type="text" style={styles.input} value={value} onChange={(event) => onChange(event.target.value)} placeholder="/uploads/..." />
       <div style={styles.imageControlRow}>
         {value ? <img src={value} alt="" style={styles.imagePreview} /> : <span style={styles.muted}>Sin foto adjunta</span>}
         <label style={{ ...styles.secondaryBtn, ...(uploading ? styles.disabledBtn : {}) }}>
@@ -845,6 +982,11 @@ function ImageInput({
             }}
           />
         </label>
+        {value && (
+          <button type="button" style={styles.secondaryBtn} onClick={() => onChange('')}>
+            Quitar foto
+          </button>
+        )}
       </div>
     </div>
   );
@@ -885,6 +1027,7 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' },
   split: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' },
   advancedGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'start' },
+  generatedFields: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '12px' },
   label: { display: 'flex', flexDirection: 'column', gap: '6px', color: theme.colors.textMuted, fontSize: theme.fontSizes.xs, fontWeight: 700, marginBottom: '10px' },
   input: { border: `1px solid ${theme.colors.border}`, borderRadius: theme.borderRadius.sm, padding: '9px 10px', fontSize: theme.fontSizes.sm, color: theme.colors.text, backgroundColor: theme.colors.background },
   imageControlRow: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' },

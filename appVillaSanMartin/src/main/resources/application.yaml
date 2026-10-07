@@ -58,3 +58,11 @@ app:
     name: ${ADMIN_NAME:Admin}
     surname: ${ADMIN_SURNAME:Villa}
     phone: ${ADMIN_PHONE:0000000000}
+storage:
+  endpoint: ${STORAGE_ENDPOINT:}
+  public-url: ${STORAGE_PUBLIC_URL:}
+  access-key: ${STORAGE_ACCESS_KEY:}
+  secret-key: ${STORAGE_SECRET_KEY:}
+  region: ${STORAGE_REGION:auto}
+  bucket: ${STORAGE_BUCKET:}
+  path-style: ${STORAGE_PATH_STYLE:true}

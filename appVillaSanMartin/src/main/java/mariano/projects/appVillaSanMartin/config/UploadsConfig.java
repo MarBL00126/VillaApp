@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class UploadsConfig implements WebMvcConfigurer {
     private final Path uploadRoot;
 
-    public UploadsConfig(@Value("${app.upload-dir:uploads}") String uploadDir) {
+    public UploadsConfig(@Value("${app.upload-dir:${java.io.tmpdir}/villa-uploads}") String uploadDir) {
         this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();
     }
 

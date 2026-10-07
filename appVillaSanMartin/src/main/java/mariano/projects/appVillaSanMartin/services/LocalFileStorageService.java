@@ -27,7 +27,7 @@ public class LocalFileStorageService implements FileStorageService {
     private final String baseUrl;
 
     public LocalFileStorageService(
-            @Value("${app.upload-dir:uploads}") String uploadDir,
+            @Value("${app.upload-dir:${java.io.tmpdir}/villa-uploads}") String uploadDir,
             @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.uploadRoot = Path.of(uploadDir).toAbsolutePath().normalize();
         this.baseUrl = baseUrl.replaceAll("/+$", "");

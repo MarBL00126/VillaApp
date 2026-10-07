@@ -326,8 +326,8 @@ export function AdminScreen() {
       onUploaded(uploaded.url);
       setMessage('Imagen adjuntada. Guarda el registro para aplicar el cambio.');
       setTimeout(() => setMessage(''), 2500);
-    } catch {
-      setError('No se pudo subir la imagen. Usa JPG, PNG, WEBP o GIF de hasta 5MB.');
+    } catch (uploadError) {
+      setError(readUploadError(uploadError));
     } finally {
       setUploadingTarget(null);
     }
@@ -825,6 +825,19 @@ function readImageValue(json: string, resource: string) {
   } catch {
     return '';
   }
+}
+
+function readUploadError(error: unknown) {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    const data = response?.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) return message;
+    }
+    if (typeof data === 'string' && data.trim()) return data;
+  }
+  return 'No se pudo subir la imagen. Usa JPG, PNG, WEBP o GIF de hasta 20MB.';
 }
 
 function updateResourceValue(json: string, field: string, value: unknown) {
